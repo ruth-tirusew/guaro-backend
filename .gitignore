@@ -1,3 +1,5 @@
 **/__pycache__/
 .sonar/*
 .env
+*.db
+**/.pytest_cache/
