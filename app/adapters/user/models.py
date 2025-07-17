@@ -5,7 +5,7 @@ from pydantic import BaseModel as PydanticBaseModel
 from typing import Optional
 
 class UserDBSchema(PydanticBaseModel):
-    id: Optional[str]
+    id: Optional[str] = None
     first_name: str
     last_name: str
     phone: str

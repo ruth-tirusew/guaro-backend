@@ -1,6 +1,7 @@
 from app.modules.authentication.service import AuthenticationService
 from app.adapters.user.interface import IUserRepository
-from app.modules.users.schemas import UserCreate, UserUpdate, UserRead
+from app.adapters.user.models import UserDBSchema
+from app.modules.users.schemas import UserCreate, UserUpdate, UserRead, UserList
 
 from typing import List, Optional
 
@@ -22,13 +23,15 @@ class UserService:
         
         auth_user = self.authentication_service.create_user(user_data)
         user = self.repository.create_user(
-            email=user_data.email,
-            first_name=user_data.first_name,
-            last_name=user_data.last_name,
-            external_id=auth_user.id,
-            phone=getattr(user_data, "phone", None),
-            username=getattr(user_data, "username", None)
+            UserDBSchema(
+                email=user_data.email,
+                first_name=user_data.first_name,
+                last_name=user_data.last_name,
+                phone=user_data.phone,
+            )
         )
+        if hasattr(user, 'id') and isinstance(user.id, uuid.UUID):
+            user.id = str(user.id)
         return UserRead.from_orm(user)
 
     def get_user(self, user_id: str) -> Optional[UserRead]:
@@ -41,7 +44,9 @@ class UserService:
 
     def list_users(self) -> List[UserRead]:
         users = self.repository.get_all_users()
-        return [UserRead.from_orm(user) for user in users]
+        return UserList(
+            users=[UserRead.from_orm(user) for user in users]
+        )
 
     def update_user(self, user_id: str, update_data: UserUpdate) -> Optional[UserRead]:
         email = update_data.email

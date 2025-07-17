@@ -1,4 +1,5 @@
 import re
+import uuid
 from pydantic import BaseModel, EmailStr, field_validator, model_validator, ValidationInfo
 from typing import List, Optional
 
@@ -35,12 +36,11 @@ class UserBase(BaseModel):
         return v
 
 class UserCreate(UserBase):
-    pass
+    password: str
 
 class UserUpdate(UserBase):
     @model_validator(mode="after")
     def at_least_one_field_provided(self):
-        # For update, at least one field should be provided (besides id)
         fields = [self.first_name, self.last_name, self.phone, self.email]
         if not any(fields):
             raise ValueError("At least one field must be provided for update")
@@ -49,6 +49,17 @@ class UserUpdate(UserBase):
 class UserRead(UserBase):
     id: str
     model_config = {"from_attributes": True}
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def convert_uuid_to_string(cls, v):
+        print(v)
+        if isinstance(v, uuid.UUID):
+            return str(v)
+        return v
+        
+
+
 
 class UserList(BaseModel):
     users: List[UserRead]    

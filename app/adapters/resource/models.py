@@ -1,10 +1,12 @@
-from app.models.base import BaseModel
-from sqlalchemy import Column, String, Text
-from sqlalchemy.dialects.postgresql import UUID
-
 import uuid
 
+from sqlalchemy import Column, String, Text, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 
+from app.models.base import BaseModel
+from pydantic import BaseModel as PydanticBaseModel
+from typing import Optional
 
 class Resource(BaseModel):
     __tablename__ = 'resources'
@@ -21,3 +23,15 @@ class RoleResource(BaseModel):
     resource_id = Column(UUID(as_uuid=True), ForeignKey('resources.id', ondelete='CASCADE'), primary_key=True)
     role = relationship('Role', back_populates='role_resources')
     resource = relationship('Resource', back_populates='role_resources')
+
+class ResourceDBSchema(PydanticBaseModel):
+    id: Optional[str]
+    action: Optional[str] = None
+    name: str
+    resource: str
+    model_config = {"from_attributes": True}
+
+class ResourceCreate(PydanticBaseModel):
+    action: Optional[str] = None
+    name: str
+    resource: str

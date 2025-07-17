@@ -4,7 +4,7 @@ from app.adapters.role.models import Role, RoleDBSchema, RoleCreate
 from typing import List, Optional
 from uuid import UUID
 
-class DBRoleRepository(IRoleRepository):
+class RoleRepository(IRoleRepository):
     def __init__(self, db: Session):
         self.db = db
 

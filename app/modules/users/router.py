@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from app.container import get_container
-from app.modules.users.schemas import UserCreate, UserUpdate, UserRead
+from app.modules.users.schemas import UserCreate, UserUpdate, UserRead,UserList
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -28,7 +28,7 @@ def get_user_by_email(email: str):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user
 
-@router.get("/", response_model=list[UserRead])
+@router.get("/", response_model=UserList)
 def list_users():
     return user_service.list_users()
 
