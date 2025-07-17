@@ -19,7 +19,7 @@ class AuthenticationService:
 
     def create_user(self, user: CreateUserModel) -> UserInfo:
         auth_user = AuthenticationUserCreate(
-            username=user.email,
+            username=user.phone,
             email=user.email,
             firstName=user.first_name,
             lastName=user.last_name,

@@ -65,7 +65,7 @@ class MockAuthAdapter(AuthAdapterInterface):
             return {"user_id": user_id, "token": token}
         raise Exception("Invalid token") 
 
-    def create_user(self, user_info: UserInfo, password: str) -> UserInfo:
+    def create_user(self, user_info: AuthenticationUserCreate) -> UserInfo:
         if user_info.username in self._users:
             raise Exception("User already exists")
         
@@ -73,18 +73,37 @@ class MockAuthAdapter(AuthAdapterInterface):
         user_dict = {
             "id": new_id,
             "username": user_info.username,
-            "password": password,
+            "password": user_info.credentials[0].get("value"),
             "email": user_info.email,
-            "first_name": user_info.first_name,
-            "last_name": user_info.last_name,
-            "roles": user_info.roles or [],
+            "first_name": user_info.firstName,
+            "last_name": user_info.lastName,
         }
         self._users[user_info.username] = user_dict
         return UserInfo(
             id=new_id,
-            username=user_info.username,
+            username= user_info.username,
             email=user_info.email,
-            first_name=user_info.first_name,
-            last_name=user_info.last_name,
-            roles=user_info.roles or [],
+            first_name=user_info.firstName,
+            last_name=user_info.lastName,
+            phone = user_info.username
+        )
+
+    def refresh_token(self, refresh_token: str) -> TokenResponse:
+        if not refresh_token.startswith("mock-refresh-token-"):
+            raise Exception("Invalid refresh token")
+        user_id = refresh_token.replace("mock-refresh-token-", "")
+        user = None
+        for u in self._users.values():
+            if u["id"] == user_id:
+                user = u
+                break
+        if not user:
+            raise Exception("Invalid refresh token")
+        new_access_token = f"mock-access-token-{user['id']}"
+        new_refresh_token = f"mock-refresh-token-{user['id']}"
+        self._tokens[new_access_token] = user["id"]
+        return TokenResponse(
+            access_token=new_access_token,
+            refresh_token=new_refresh_token,
+            expires_in=3600
         )

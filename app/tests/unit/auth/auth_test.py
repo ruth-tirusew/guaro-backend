@@ -14,7 +14,7 @@ def test_authenticate():
 def test_create_user():
     service = AuthenticationService(adapter=MockAuthAdapter())
     user_data = CreateUserModel(
-        username="newuser",
+        phone="+251989097890",
         email="newuser@example.com",
         first_name="New",
         last_name="User",
@@ -22,8 +22,7 @@ def test_create_user():
         roles=["user"]
     )
     user = service.create_user(user_data)
-    assert user.username == "newuser"
+    assert user.username == "+251989097890"
     assert user.email == "newuser@example.com"
     assert user.first_name == "New"
     assert user.last_name == "User"
-    assert "user" in user.roles

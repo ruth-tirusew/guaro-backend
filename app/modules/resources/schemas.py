@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+import uuid
+from pydantic import BaseModel, field_validator, model_validator
 from typing import Optional, List
 
 class ResourceBase(BaseModel):
@@ -8,6 +9,15 @@ class ResourceBase(BaseModel):
 class ResourceRead(ResourceBase):
     id: str
     model_config = {"from_attributes": True}
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def convert_uuid_to_string(cls, v):
+        print(v)
+        if isinstance(v, uuid.UUID):
+            return str(v)
+        return v
+
 class ResourceList(BaseModel):
     resources: List[ResourceRead]
 
@@ -25,6 +35,4 @@ class ResourceUpdate(BaseModel):
             raise ValueError("At least one field must be provided for update")
         return values
 
-    # Pydantic v2: use model_validator
-    from pydantic import model_validator
     _validate = model_validator(mode="after")(validate_at_least_one_field)

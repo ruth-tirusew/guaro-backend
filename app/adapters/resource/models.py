@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 
 from app.models.base import BaseModel
 from pydantic import BaseModel as PydanticBaseModel
+from pydantic import field_validator
 from typing import Optional
 
 class Resource(BaseModel):
@@ -22,6 +23,15 @@ class ResourceDBSchema(PydanticBaseModel):
     name: str
     resource: str
     model_config = {"from_attributes": True}
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def convert_uuid_to_string(cls, v):
+        if isinstance(v, uuid.UUID):
+            return str(v)
+        return v
+
+    
 
 class ResourceCreate(PydanticBaseModel):
     action: Optional[str] = None

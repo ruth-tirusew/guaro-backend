@@ -12,6 +12,10 @@ class IRoleRepository(ABC):
         pass
 
     @abstractmethod
+    def get_role_by_name(self, name: str) -> Optional[RoleDBSchema]:
+        pass
+
+    @abstractmethod
     def get_all_roles(self) -> List[RoleDBSchema]:
         pass
 

@@ -1,3 +1,4 @@
+import uuid
 from sqlalchemy.orm import Session
 from app.adapters.resource.interface import IResourceRepository
 from app.adapters.resource.models import Resource, ResourceDBSchema, ResourceCreate
@@ -15,7 +16,8 @@ class ResourceRepository(IResourceRepository):
         return ResourceDBSchema.model_validate(db_resource)
 
     def get_resource_by_id(self, resource_id: str) -> Optional[ResourceDBSchema]:
-        db_resource = self.db.query(Resource).filter(Resource.id == resource_id).first()
+        uuid_obj = uuid.UUID(resource_id)
+        db_resource = self.db.query(Resource).filter(Resource.id == uuid_obj).first()
         if db_resource:
             return ResourceDBSchema.model_validate(db_resource)
         return None
@@ -25,7 +27,8 @@ class ResourceRepository(IResourceRepository):
         return [ResourceDBSchema.model_validate(resource) for resource in db_resources]
 
     def update_resource(self, resource_id: str, update_data: ResourceCreate) -> ResourceDBSchema:
-        db_resource = self.db.query(Resource).filter(Resource.id == resource_id).first()
+        uuid_obj = uuid.UUID(resource_id)
+        db_resource = self.db.query(Resource).filter(Resource.id == uuid_obj).first()
         if not db_resource:
             raise ValueError('Resource not found')
         for key, value in update_data.model_dump().items():
@@ -35,7 +38,8 @@ class ResourceRepository(IResourceRepository):
         return ResourceDBSchema.model_validate(db_resource)
 
     def delete_resource(self, resource_id: str) -> None:
-        db_resource = self.db.query(Resource).filter(Resource.id == resource_id).first()
+        uuid_obj = uuid.UUID(resource_id)
+        db_resource = self.db.query(Resource).filter(Resource.id == uuid_obj).first()
         if db_resource:
             self.db.delete(db_resource)
             self.db.commit()

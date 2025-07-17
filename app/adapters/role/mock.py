@@ -18,6 +18,12 @@ class MockRoleRepository(IRoleRepository):
                 return role
         return None
 
+    def get_role_by_name(self, name: str) -> Optional[RoleDBSchema]:
+        for role in self.roles:
+            if role.name == name:
+                return role
+        return None
+
     def get_all_roles(self) -> List[RoleDBSchema]:
         return list(self.roles)
 
