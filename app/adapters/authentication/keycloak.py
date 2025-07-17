@@ -5,8 +5,15 @@ from keycloak import KeycloakOpenID, KeycloakAdmin
 from keycloak.exceptions import KeycloakError, KeycloakAuthenticationError
 from fastapi import FastAPI, Depends, HTTPException, status, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from typing import Dict, Any
 
-from app.adapters.authentication.interface import *
+from app.adapters.authentication.interface import (
+    AuthAdapterInterface,
+    TokenResponse,
+    UserInfo,
+    UserCredentials,
+    AuthenticationUserCreate
+)
 from app.logging import logger
 
 class KeycloakAdapter(AuthAdapterInterface):

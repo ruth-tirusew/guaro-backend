@@ -1,5 +1,11 @@
 
-from app.adapters.authentication.interface import *
+from app.adapters.authentication.interface import (
+    AuthAdapterInterface,
+    TokenResponse,
+    UserInfo,
+    UserCredentials,
+    AuthenticationUserCreate
+)
 from app.logging import logger
 from typing import Dict, Any
 
@@ -58,3 +64,27 @@ class MockAuthAdapter(AuthAdapterInterface):
             user_id = self._tokens[token]
             return {"user_id": user_id, "token": token}
         raise Exception("Invalid token") 
+
+    def create_user(self, user_info: UserInfo, password: str) -> UserInfo:
+        if user_info.username in self._users:
+            raise Exception("User already exists")
+        
+        new_id = f"mock-{len(self._users) + 1}"
+        user_dict = {
+            "id": new_id,
+            "username": user_info.username,
+            "password": password,
+            "email": user_info.email,
+            "first_name": user_info.first_name,
+            "last_name": user_info.last_name,
+            "roles": user_info.roles or [],
+        }
+        self._users[user_info.username] = user_dict
+        return UserInfo(
+            id=new_id,
+            username=user_info.username,
+            email=user_info.email,
+            first_name=user_info.first_name,
+            last_name=user_info.last_name,
+            roles=user_info.roles or [],
+        )

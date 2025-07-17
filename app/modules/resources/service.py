@@ -19,6 +19,4 @@ class AuthService:
         return self.adapter.verify_token(token)
 
     def refresh_token(self, refresh_token: str) -> TokenResponse:
-        if hasattr(self.adapter, 'refresh_token'):
-            return self.adapter.refresh_token(refresh_token)
-        raise NotImplementedError('refresh_token not implemented in this adapter')
+        return self.adapter.refresh_token(refresh_token)
