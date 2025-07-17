@@ -1,6 +1,7 @@
 import uuid
 
 from pydantic import BaseModel as PydanticBaseModel
+from pydantic import field_validator
 from sqlalchemy import Column, String, Integer, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -25,12 +26,29 @@ class UserRole(BaseModel):
     user = relationship('UserModel', back_populates='user_roles')
 
 
+class RoleResource(BaseModel):
+    __tablename__ = 'role_resources'
+    role_id = Column(UUID(as_uuid=True), ForeignKey('roles.id', ondelete='CASCADE'), primary_key=True)
+    resource_id = Column(UUID(as_uuid=True), ForeignKey('resources.id', ondelete='CASCADE'), primary_key=True)
+    role = relationship('Role', back_populates='role_resources')
+    resource = relationship('Resource', back_populates='role_resources')
+
+
 class RoleDBSchema(PydanticBaseModel):
     id: Optional[str]
     name: str
     description: Optional[str] = None
     
     model_config = {"from_attributes": True}
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def convert_uuid_to_string(cls, v):
+        print(v)
+        if isinstance(v, uuid.UUID):
+            return str(v)
+        return v
+    
 
 class RoleCreate(PydanticBaseModel):
     name: str

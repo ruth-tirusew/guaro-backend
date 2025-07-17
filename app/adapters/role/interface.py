@@ -22,3 +22,16 @@ class IRoleRepository(ABC):
     @abstractmethod
     def delete_role(self, role_id: str) -> None:
         pass
+    
+    @abstractmethod
+    def assign_role_to_resource(self, resource_id: str, role_id: str):
+        pass
+
+    @abstractmethod
+    def unassign_role_to_resource(self, resource_id: str, role_id: str):
+        pass
+
+    @abstractmethod
+    def get_assigned_resources(self,role_id:str):
+        pass
+    

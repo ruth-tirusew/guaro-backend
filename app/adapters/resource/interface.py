@@ -12,10 +12,6 @@ class IResourceRepository(ABC):
         pass
 
     @abstractmethod
-    def get_resource_by_role_id(self, role_id: str) -> Optional[ResourceDBSchema]:
-        pass
-
-    @abstractmethod
     def get_all_resources(self) -> List[ResourceDBSchema]:
         pass
 

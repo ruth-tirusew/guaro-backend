@@ -18,10 +18,6 @@ class MockResourceRepository(IResourceRepository):
                 return resource
         return None
 
-    def get_resource_by_role_id(self, role_id: str) -> Optional[ResourceDBSchema]:
-        # This is a stub; in a real implementation, you would filter by role-resource mapping
-        return next((r for r in self.resources if getattr(r, 'role_id', None) == role_id), None)
-
     def get_all_resources(self) -> List[ResourceDBSchema]:
         return list(self.resources)
 

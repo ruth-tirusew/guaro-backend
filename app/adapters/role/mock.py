@@ -31,3 +31,26 @@ class MockRoleRepository(IRoleRepository):
 
     def delete_role(self, role_id: str) -> None:
         self.roles = [role for role in self.roles if role.id != role_id]
+
+    def assign_role_to_resource(self, resource_id: str, role_id: str):
+        if not hasattr(self, "role_resource_assignments"):
+            self.role_resource_assignments = []
+        if (role_id, resource_id) not in self.role_resource_assignments:
+            self.role_resource_assignments.append((role_id, resource_id))
+
+    def unassign_role_to_resource(self, resource_id: str, role_id: str):
+        if hasattr(self, "role_resource_assignments"):
+            self.role_resource_assignments = [
+                (r_id, res_id)
+                for (r_id, res_id) in self.role_resource_assignments
+                if not (r_id == role_id and res_id == resource_id)
+            ]
+
+    def get_assigned_resources(self, role_id: str):
+        if not hasattr(self, "role_resource_assignments"):
+            self.role_resource_assignments = []
+        return [
+            resource_id
+            for (r_id, resource_id) in self.role_resource_assignments
+            if r_id == role_id
+        ]

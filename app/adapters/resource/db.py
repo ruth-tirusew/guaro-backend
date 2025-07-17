@@ -20,13 +20,6 @@ class ResourceRepository(IResourceRepository):
             return ResourceDBSchema.model_validate(db_resource)
         return None
 
-    def get_resource_by_role_id(self, role_id: str) -> Optional[ResourceDBSchema]:
-        # This is a stub; in a real implementation, you would join with RoleResource
-        db_resource = self.db.query(Resource).join(Resource.role_resources).filter_by(role_id=role_id).first()
-        if db_resource:
-            return ResourceDBSchema.model_validate(db_resource)
-        return None
-
     def get_all_resources(self) -> List[ResourceDBSchema]:
         db_resources = self.db.query(Resource).all()
         return [ResourceDBSchema.model_validate(resource) for resource in db_resources]

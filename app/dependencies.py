@@ -35,16 +35,17 @@ def init_containers():
     )
 
     container.register(
-        "role_service",
-        lambda: RoleService(
-           role_repository=RoleRepository(next(get_db()))
+        "resource_service",
+        lambda: ResourceService(
+           resource_repository=ResourceRepository(next(get_db()))
         )
     )
 
     container.register(
-        "resource_service",
-        lambda: ResourceService(
-           resource_repository=ResourceRepository(next(get_db()))
+        "role_service",
+        lambda: RoleService(
+           role_repository=RoleRepository(next(get_db())),
+           resource_service=container.resolve("resource_service")
         )
     )
 

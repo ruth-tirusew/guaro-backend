@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from app.adapters.role.interface import IRoleRepository
-from app.adapters.role.models import Role, RoleDBSchema, RoleCreate
+from app.adapters.role.models import Role, RoleDBSchema, RoleCreate, RoleResource
+from app.adapters.resource.models import Resource
 from typing import List, Optional
 from uuid import UUID
 
@@ -16,7 +17,8 @@ class RoleRepository(IRoleRepository):
         return RoleDBSchema.model_validate(db_role)
 
     def get_role_by_id(self, role_id: str) -> Optional[RoleDBSchema]:
-        db_role = self.db.query(Role).filter(Role.id == role_id).first()
+        uuid_obj = UUID(role_id)
+        db_role = self.db.query(Role).filter(Role.id == uuid_obj).first()
         if db_role:
             return RoleDBSchema.model_validate(db_role)
         return None
@@ -40,3 +42,27 @@ class RoleRepository(IRoleRepository):
         if db_role:
             self.db.delete(db_role)
             self.db.commit()
+
+    def assign_role_to_resource(self, resource_id: str, role_id: str):
+        existing = self.db.query(RoleResource).filter_by(role_id=role_id, resource_id=resource_id).first()
+        if not existing:
+            db_role_resource = RoleResource(role_id=role_id, resource_id=resource_id)
+            self.db.add(db_role_resource)
+            self.db.commit()
+
+    def unassign_role_to_resource(self, resource_id: str, role_id: str):
+        db_role_resource = self.db.query(RoleResource).filter_by(role_id=role_id, resource_id=resource_id).first()
+        if db_role_resource:
+            self.db.delete(db_role_resource)
+            self.db.commit()
+
+    def get_assigned_resources(self, role_id: str):
+        resources = (
+            self.db.query(Resource)
+            .join(RoleResource, Resource.id == RoleResource.resource_id)
+            .filter(RoleResource.role_id == role_id)
+            .all()
+        )
+        return resources
+        
+
