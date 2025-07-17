@@ -1,32 +1,51 @@
-from typing import Callable, Dict, Type, Any
-class Container:
-    def __init__(self):
-        self._providers: Dict[str, Callable[[], Any]] = {}
+from app.container import get_container
+from app.modules.authentication.service import AuthenticationService
+from app.adapters.authentication.keycloak import KeycloakAdapter
+from app.adapters.resource.db import ResourceRepository
+from app.adapters.role.db import RoleRepository
+from app.adapters.user.db import UserRepository
 
-    def register(self, name: str, provider: Callable[[], Any]):
-        self._providers[name] = provider
+from app.config import settings
 
-    def resolve(self, name: str) -> Any:
-        provider = self._providers.get(name)
-        if not provider:
-            raise ValueError(f"No provider registered for '{name}'")
-        return provider()
+from app.modules.resources.service import ResourceService
+from app.modules.roles.service import RoleService
+from app.modules.users.service import UserService
 
-def get_container() -> Container:
-    if not hasattr(get_container, "_instance"):
-        get_container._instance = Container()
-    return get_container._instance
+from app.database import get_db
 
+def init_containers():
+    container = get_container()
+    container.register(
+        "auth_adapter",
+        lambda: KeycloakAdapter(
+            server_url=settings.KEYCLOAK_URL,
+            client_id=settings.KEYCLOAK_CLIENT_ID,
+            client_secret=settings.KEYCLOAK_CLIENT_SECRET,
+            realm=settings.KEYCLOAK_REALM
+        )
+    )
+    container.register("auth_service", lambda: AuthenticationService(container.resolve("auth_adapter")))
+    #TODO: Change to factory when registering services
+    container.register(
+        "user_service",
+        lambda: UserService(
+            authentication_service=container.resolve("auth_service"),
+            user_repository=UserRepository(next(get_db()))
+        )
+    )
 
-def register_auth_adapter(provider: Callable[[], Any]):
-    get_container().register("auth_adapter", provider)
+    container.register(
+        "role_service",
+        lambda: RoleService(
+           role_repository=RoleRepository(next(get_db()))
+        )
+    )
 
-def get_auth_adapter() -> Any:
-    return get_container().resolve("auth_adapter")
+    container.register(
+        "resource_service",
+        lambda: ResourceService(
+           resource_repository=ResourceRepository(next(get_db()))
+        )
+    )
 
-
-def register_auth_service(provider=None):
-    get_container().register("auth_service", provider)
-
-def get_auth_service():
-    return get_container().resolve("auth_service") 
+    

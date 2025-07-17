@@ -1,33 +1,18 @@
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-
 from app.config import settings, fastapi_config
-from app.database import Base, engine, get_db
-from app.dependencies import register_auth_adapter
+from app.database import Base, engine
 from app.adapters.authentication.keycloak import KeycloakAdapter
+from app.dependencies import init_containers
+
+init_containers()
+
 from app.modules.authentication.router import router as authentication_router
-from app.modules.authentication.provider import authentication_service_factory
-from app.dependencies import register_auth_service
-
-
-register_auth_adapter(lambda: KeycloakAdapter(
-    server_url=settings.KEYCLOAK_URL,
-    client_id=settings.KEYCLOAK_CLIENT_ID,
-    client_secret=settings.KEYCLOAK_CLIENT_SECRET,
-    realm=settings.KEYCLOAK_REALM
-))
-
-register_auth_service(authentication_service_factory)
-
+from app.modules.users.router import router as user_router
 
 app = FastAPI(**fastapi_config)
 
 Base.metadata.create_all(bind=engine)
-
-@app.on_event("shutdown")
-def shutdown_db_client():
-    engine.dispose()
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,3 +23,8 @@ app.add_middleware(
 )
 
 app.include_router(authentication_router, prefix="/api/v1")
+app.include_router(user_router, prefix="/api/v1")
+
+@app.on_event("shutdown")
+def shutdown_db_client():
+    engine.dispose()
