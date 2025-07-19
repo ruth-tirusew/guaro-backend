@@ -3,7 +3,6 @@ import uuid
 from pydantic import BaseModel, EmailStr, field_validator, model_validator, ValidationInfo
 from typing import List, Optional
 
-EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 PHONE_REGEX = re.compile(r"^\+?\d{7,15}$")
 
 class UserBase(BaseModel):
@@ -27,14 +26,7 @@ class UserBase(BaseModel):
         if not PHONE_REGEX.match(v):
             raise ValueError("Invalid phone number format")
         return v.strip()
-
-    @field_validator("email")
-    @classmethod
-    def email_must_be_valid(cls, v):
-        if v is not None and not EMAIL_REGEX.match(v):
-            raise ValueError("Invalid email format")
-        return v
-
+        
 class UserCreate(UserBase):
     password: str
 
