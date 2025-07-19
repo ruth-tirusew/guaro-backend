@@ -8,6 +8,7 @@ from app.dependencies import init_containers
 init_containers()
 
 from app.modules.authentication.router import router as authentication_router
+from app.modules.farmers.router import router as farmer_router
 from app.modules.resources.router import router as resource_router
 from app.modules.roles.router import router as role_router
 from app.modules.users.router import router as user_router
@@ -25,9 +26,10 @@ app.add_middleware(
 )
 
 app.include_router(authentication_router, prefix="/api/v1")
-app.include_router(user_router, prefix="/api/v1")
+app.include_router(farmer_router, prefix="/api/v1")
 app.include_router(role_router, prefix="/api/v1")
 app.include_router(resource_router, prefix="/api/v1")
+app.include_router(user_router, prefix="/api/v1")
 
 @app.on_event("shutdown")
 def shutdown_db_client():

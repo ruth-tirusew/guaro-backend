@@ -1,12 +1,15 @@
 from app.container import get_container
 from app.modules.authentication.service import AuthenticationService
 from app.adapters.authentication.keycloak import KeycloakAdapter
+from app.adapters.biodata.db import BiodataRepository
+from app.adapters.farmers.db import FarmerRepository
 from app.adapters.resource.db import ResourceRepository
 from app.adapters.role.db import RoleRepository
 from app.adapters.user.db import UserRepository
 
 from app.config import settings
-
+from app.modules.biodata.service import BiodataService
+from app.modules.farmers.service import FarmerService
 from app.modules.resources.service import ResourceService
 from app.modules.roles.service import RoleService
 from app.modules.users.service import UserService
@@ -33,6 +36,15 @@ def init_containers():
             user_repository=UserRepository(next(get_db()))
         )
     )
+
+    container.register("farmer_service", lambda: FarmerService(
+        farmer_repository= FarmerRepository(next(get_db()))
+    ))
+
+    container.register("biodata_service", lambda: BiodataService(
+        farmer_service=container.resolve("farmer_service"),
+        biodata_repository=BiodataRepository(next(get_db))
+    ))
 
     container.register(
         "resource_service",
