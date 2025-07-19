@@ -15,7 +15,7 @@ def create_role(role: RoleCreate):
     try:
         return role_service.create_role(role)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/", response_model=List[RoleRead])
 def get_all_roles():
