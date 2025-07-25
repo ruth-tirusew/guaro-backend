@@ -1,11 +1,15 @@
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
-from app.adapters.user.models import UserModel, UserDBSchema
+from app.adapters.user.models import UserModel, UserDBSchema, UserProvider
 
 class IUserRepository(ABC):
     @abstractmethod
     def create_user(self, user_data: UserDBSchema) -> UserModel:
+        pass
+
+    @abstractmethod
+    def create_user_proviider(user_id: str, provider_id: str) -> UserProvider:
         pass
 
     @abstractmethod

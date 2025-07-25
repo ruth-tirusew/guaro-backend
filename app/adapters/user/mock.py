@@ -6,12 +6,21 @@ import uuid
 class MockUserRepository(IUserRepository):
     def __init__(self):
         self.users = [] 
+        self.user_providers = []
 
     def create_user(self, user_data: UserCreate) -> UserRead:
         user_id = str(uuid.uuid4())
         user = UserRead(id=user_id, **user_data.dict())
         self.users.append(user)
         return user
+
+    def create_user_proviider(self, user_id: str, provider_id: str):
+        self.user_providers.append({
+            "provider_id":provider_id,
+            "user_id":user_id
+        })
+
+        return self.get_user_by_id(user_id=user_id)
 
     def get_user_by_id(self, user_id: str) -> Optional[UserRead]:
         for user in self.users:

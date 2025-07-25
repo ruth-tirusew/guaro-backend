@@ -63,7 +63,7 @@ class RoleRepository(IRoleRepository):
         resource_uuid = UUID(resource_id)
         db_role_resource = self.db.query(RoleResource).filter_by(role_id=role_uuid, resource_id=resource_uuid).first()
         if db_role_resource:
-            self.db.delete(db_role_resource)
+            db_role_resource.is_deleted=True
             self.db.commit()
 
     def get_assigned_resources(self, role_id: str):
