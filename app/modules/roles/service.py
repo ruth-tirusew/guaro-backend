@@ -6,7 +6,7 @@ from app.modules.resources.service import ResourceService
 from app.adapters.role.models import RoleDBSchema, RoleCreate
 from app.modules.roles.schemas import RoleRead
 from app.adapters.resource.models import ResourceDBSchema
-from app.utils.errors import  NotFoundError
+from app.modules.roles.errors import  NotFoundError
 
 class RoleService:
     def __init__(self, role_repository: IRoleRepository, resource_service: ResourceService):

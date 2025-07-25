@@ -14,8 +14,19 @@ role_service: RoleService = container.resolve("role_service")
 def create_role(role: RoleCreate):
     try:
         return role_service.create_role(role)
+    except ValueError as e:
+        raise ValidationErrorFactory.invalid_value(
+            field="role_data",
+            value=str(role),
+            user_message=str(e),
+            context={"operation": "create_role", "role_data": role.model_dump()}
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise ErrorFactory.internal_error(
+            user_message="Failed to create role. Please try again later.",
+            log_message=f"Role creation failed: {str(e)}",
+            context={"operation": "create_role", "role_data": role.model_dump(), "error": str(e)}
+        )
 
 @router.get("/", response_model=List[RoleRead])
 def get_all_roles():

@@ -1,9 +1,11 @@
+from typing import List, Optional
+import uuid
+
 from app.modules.authentication.service import AuthenticationService
 from app.adapters.user.interface import IUserRepository
 from app.adapters.user.models import UserDBSchema
 from app.modules.users.schemas import UserCreate, UserUpdate, UserRead, UserList
 
-from typing import List, Optional
 
 class UserService:
     def __init__(self, authentication_service: AuthenticationService, user_repository: IUserRepository):
