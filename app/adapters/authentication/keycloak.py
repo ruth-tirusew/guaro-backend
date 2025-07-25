@@ -12,7 +12,8 @@ from app.adapters.authentication.interface import (
     TokenResponse,
     UserInfo,
     UserCredentials,
-    AuthenticationUserCreate
+    AuthenticationUserCreate,
+    UpdateUserModel
 )
 from app.logging import logger
 
@@ -181,16 +182,11 @@ class KeycloakAdapter(AuthAdapterInterface):
 
         Args:
             user_info (UserInfo): The user information to create.
-            password (str): The password for the new user.
 
         Returns:
             UserInfo: The created user information.
         """
         try:
-
-
-           
-
             user_id = self.keycloak_admin.create_user(payload=user_info.dict())
             if not user_id:
                 raise Exception("Failed to create user in Keycloak")
@@ -216,4 +212,32 @@ class KeycloakAdapter(AuthAdapterInterface):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create user"
             )
-        
+    
+    def update_user(self, user_info:UpdateUserModel) ->UserInfo:
+        try:
+            user_id = self.keycloak_admin.update_user(payload=user_info.dict(), user_id=user_info.id)
+            if not user_id:
+                raise Exception("Failed to update user in Keycloak")
+
+            user = self.keycloak_admin.get_user(user_info.id)
+            return UserInfo(
+                id=user.get("id"),
+                username=user.get("username"),
+                email=user.get("email"),
+                first_name=user.get("firstName"),
+                last_name=user.get("lastName"),
+                roles=user.get("realmRoles", [])
+            )
+
+        except KeycloakError as e:
+            logger.error(f"Failed to create user: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Failed to create user"
+            )
+        except Exception as e:
+            logger.error(f"Create user error: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create user"
+            )

@@ -1,5 +1,5 @@
 from app.adapters.user.interface import IUserRepository
-from app.adapters.user.models import UserModel, UserDBSchema
+from app.adapters.user.models import UserModel, UserDBSchema, UserProvider
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException, status
@@ -20,7 +20,22 @@ class UserRepository(IUserRepository):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User creation failed.")
         return user
 
+    def create_user_proviider(user_id: str, provider_id: str) -> UserProvider:
+        user_provider = UserProvider(
+            user_id = user_id,
+            provider_id = provider_id
+        )
+
+        try:
+            self.db.commit()
+            self.db.refresh(user)
+        except IntegrityError:
+            self.db.rollback()
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User creation failed.")
+        return user
+
     def get_user_by_id(self, user_id: str) -> UserModel | None:
+        print(user_id)
         uuid_obj = uuid.UUID(user_id)
         return self.db.query(UserModel).filter(UserModel.id == uuid_obj).first()
 

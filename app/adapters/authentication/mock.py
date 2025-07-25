@@ -4,7 +4,8 @@ from app.adapters.authentication.interface import (
     TokenResponse,
     UserInfo,
     UserCredentials,
-    AuthenticationUserCreate
+    AuthenticationUserCreate,
+    UpdateUserModel
 )
 from app.logging import logger
 from typing import Dict, Any
@@ -87,6 +88,14 @@ class MockAuthAdapter(AuthAdapterInterface):
             last_name=user_info.lastName,
             phone = user_info.username
         )
+
+    def update_user(self, user_info: UpdateUserModel)-> UserInfo:
+        for idx, user in enumerate(self._users):
+            if user.id == user_id:
+                updated_user = user.copy(update=update_data.dict(exclude_unset=True))
+                self._users[idx] = updated_user
+                return updated_user
+        raise ValueError("User not found")
 
     def refresh_token(self, refresh_token: str) -> TokenResponse:
         if not refresh_token.startswith("mock-refresh-token-"):

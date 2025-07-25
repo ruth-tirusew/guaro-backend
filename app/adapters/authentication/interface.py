@@ -3,6 +3,7 @@ from typing import Optional, Dict, Any, List
 
 from pydantic import BaseModel
 
+
 class UserCredentials(BaseModel):
     username: str
     password: str
@@ -12,6 +13,13 @@ class TokenResponse(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
     expires_in: int
+
+class UpdateUserModel(BaseModel):
+    id: str
+    username: str
+    email: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
 
 class UserInfo(BaseModel):
     id: str
@@ -80,6 +88,10 @@ class AuthAdapterInterface(ABC):
         Returns:
             UserInfo: The created user information.
         """
+        pass
+
+    @abstractmethod
+    def update_user(self, user:UpdateUserModel)->UserInfo:
         pass
 
 
