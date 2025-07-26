@@ -13,10 +13,13 @@ class Crop(BaseModel):
     variety = Column(String(50))
 
     initial_records = relationship("InitialBiodata", back_populates="crop")
-    products = relationship("Product", back_populates="raw_material")
     
     crop_warehouse = relationship('CropWarehouse', back_populates='crop', cascade='all, delete-orphan')
     warehouses = relationship('Warehouse', secondary='crop_warehouse', back_populates='crops')
+
+    product_crop = relationship('ProductCrop', back_populates='crop', cascade='all, delete-orphan')
+    products = relationship('Product', secondary='product_crop', back_populates='raw_materials')
+
 
 class InitialBiodata(BaseModel):
     __tablename__ = "initial_biodata"

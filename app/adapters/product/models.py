@@ -14,15 +14,27 @@ class Product(BaseModel):
     price = Column(Numeric(10, 2), default=0.0)
     unit = Column(String(100))
     available_amount = Column(Numeric(10, 2), default=0.0)
-    raw_material_id = Column(PG_UUID(as_uuid=True), ForeignKey("crops.id"), nullable=False)
     
-    # Relationships
-    raw_material = relationship("Crop", back_populates="products")
     price_ledger = relationship("ProductPriceLedger", back_populates="product", cascade="all, delete-orphan")
     goods_receiving = relationship("ProductAmountLedger", back_populates="product", cascade="all, delete-orphan")
     
     product_warehouse = relationship('ProductWarehouse', back_populates='product', cascade='all, delete-orphan')
     warehouses = relationship('Warehouse', secondary='product_warehouse', back_populates='products')
+
+    product_crop = relationship('ProductCrop', back_populates='product', cascade='all, delete-orphan')
+    raw_materials = relationship('Crop', secondary='product_crop', back_populates='products')
+
+
+class ProductCrop(BaseModel):
+    __tablename__="product_crop"
+
+    product_id = Column(PG_UUID(as_uuid=True), ForeignKey('products.id', ondelete='CASCADE'), primary_key=True)
+    crop_id = Column(PG_UUID(as_uuid=True), ForeignKey('crops.id', ondelete='CASCADE'), primary_key=True)
+
+    crop = relationship('Crop', back_populates='product_crop')
+    product = relationship('Product', back_populates='product_crop')
+
+
 
 
 class ProductPriceLedger(BaseModel):
