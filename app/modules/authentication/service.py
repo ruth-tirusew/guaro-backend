@@ -1,5 +1,6 @@
 from typing import Dict, Any
 
+from app.core.exceptions import ErrorFactory
 from app.adapters.authentication.interface import (
     AuthAdapterInterface, 
     UserCredentials, 
@@ -8,7 +9,7 @@ from app.adapters.authentication.interface import (
     RefreshTokenRequest, 
     AuthenticationUserCreate
 )
-from app.modules.authentication.schemas import CreateUserModel, UpdateUserModel
+from app.modules.authentication.schemas import CreateUserModel, UpdateUserModel, PasswordResetResponse
 
 class AuthenticationService:
     def __init__(self, adapter: AuthAdapterInterface):
@@ -46,3 +47,14 @@ class AuthenticationService:
 
     def verify_token(self, token: str) -> Dict[str, Any]:
         return self.adapter.verify_token(token)
+
+    def init_reset_token(self, email: str) -> str:
+        # Temporary till email adapter is integrated
+        return self.adapter.init_reset_token(email)
+
+    def reset_token(self, token: str, new_password: str)->bool:
+        result = self.adapter.reset_token(token, new_password)
+        if not result:
+            raise ErrorFactory.bad_request("Invalid or expired reset token.")
+
+        return True

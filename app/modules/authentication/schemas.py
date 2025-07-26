@@ -12,4 +12,8 @@ class CreateUserModel(UserBase):
     password: str
 
 class UpdateUserModel(UserBase):
+    id: str
     ...
+
+class PasswordResetResponse(BaseModel):
+    message: str
