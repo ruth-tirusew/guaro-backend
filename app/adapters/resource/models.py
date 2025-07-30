@@ -18,18 +18,11 @@ class Resource(BaseModel):
 
 
 class ResourceDBSchema(PydanticBaseModel):
-    id: Optional[str]
+    id: Optional[uuid.UUID]
     action: Optional[str] = None
     name: str
     resource: str
     model_config = {"from_attributes": True}
-
-    @field_validator("id", mode="before")
-    @classmethod
-    def convert_uuid_to_string(cls, v):
-        if isinstance(v, uuid.UUID):
-            return str(v)
-        return v
 
     
 

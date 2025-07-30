@@ -15,10 +15,10 @@ class Crop(BaseModel):
     initial_records = relationship("InitialBiodata", back_populates="crop")
     
     crop_warehouse = relationship('CropWarehouse', back_populates='crop', cascade='all, delete-orphan')
-    warehouses = relationship('Warehouse', secondary='crop_warehouse', back_populates='crops')
+    warehouses = relationship('Warehouse', secondary='crop_warehouse', back_populates='crops', overlaps="crop_warehouse")
 
     product_crop = relationship('ProductCrop', back_populates='crop', cascade='all, delete-orphan')
-    products = relationship('Product', secondary='product_crop', back_populates='raw_materials')
+    products = relationship('Product', secondary='product_crop', back_populates='raw_materials', overlaps="product_crop")
 
 
 class InitialBiodata(BaseModel):
@@ -40,5 +40,5 @@ class CropWarehouse(BaseModel):
     crop_id = Column(PG_UUID(as_uuid=True), ForeignKey('crops.id', ondelete='CASCADE'), primary_key=True)
     warehouse_id = Column(PG_UUID(as_uuid=True), ForeignKey('warehouses.id', ondelete='CASCADE'), primary_key=True)
 
-    warehouse = relationship('Warehouse', back_populates='crop_warehouse')
-    crop = relationship('Crop', back_populates='crop_warehouse')
+    warehouse = relationship('Warehouse', back_populates='crop_warehouse', overlaps="warehouses, crops")
+    crop = relationship('Crop', back_populates='crop_warehouse', overlaps="warehouses, crops")

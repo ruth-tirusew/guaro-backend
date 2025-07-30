@@ -3,7 +3,7 @@ from typing import List
 from app.container import get_container
 from app.modules.resources.schemas import ResourceRead
 from app.modules.roles.service import RoleService
-from app.modules.roles.schemas import RoleCreate, RoleRead, RoleUpdate  # Assuming these exist
+from app.modules.roles.schemas import RoleCreate, RoleRead, RoleUpdate
 
 router = APIRouter(prefix="/roles", tags=["Roles"])
 

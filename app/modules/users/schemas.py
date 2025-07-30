@@ -39,19 +39,8 @@ class UserUpdate(UserBase):
         return self
 
 class UserRead(UserBase):
-    id: str
+    id: uuid.UUID
     model_config = {"from_attributes": True}
-
-    @field_validator("id", mode="before")
-    @classmethod
-    def convert_uuid_to_string(cls, v):
-        print(v)
-        if isinstance(v, uuid.UUID):
-            return str(v)
-        return v
-        
-
-
 
 class UserList(BaseModel):
     users: List[UserRead]    

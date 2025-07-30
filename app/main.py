@@ -10,6 +10,7 @@ from datetime import datetime
 
 from app.config import settings, fastapi_config
 from app.database import Base, engine
+from app.logging import logger
 from app.adapters.authentication.keycloak import KeycloakAdapter
 from app.dependencies import init_containers
 from app.core.exceptions import APIError, ErrorFactory
@@ -18,14 +19,12 @@ init_containers()
 
 from app.modules.authentication.router import router as authentication_router
 from app.modules.farmers.router import router as farmer_router
+from app.modules.biodata.router import router as biodata_router
 from app.modules.products.router import router as product_router
 from app.modules.resources.router import router as resource_router
 from app.modules.roles.router import router as role_router
 from app.modules.warehouse.router import router as warehouse_router
 from app.modules.users.router import router as user_router
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 app = FastAPI(**fastapi_config)
 
@@ -40,6 +39,7 @@ app.add_middleware(
 )
 
 app.include_router(authentication_router, prefix="/api/v1")
+app.include_router(biodata_router, prefix="/api/v1")
 app.include_router(farmer_router, prefix="/api/v1")
 app.include_router(product_router, prefix="/api/v1")
 app.include_router(role_router, prefix="/api/v1")

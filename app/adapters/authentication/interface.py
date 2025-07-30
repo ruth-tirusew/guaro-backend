@@ -93,16 +93,3 @@ class AuthAdapterInterface(ABC):
     @abstractmethod
     def update_user(self, user:UpdateUserModel)->UserInfo:
         pass
-
-
-    @abstractmethod
-    def init_reset_token(self, email: str)->str:
-        pass
-
-    @abstractmethod
-    def reset_token(self, token: str)->bool:
-        pass
-
-
-
-    

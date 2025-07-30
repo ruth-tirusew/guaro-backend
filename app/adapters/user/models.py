@@ -24,10 +24,10 @@ class UserModel(BaseModel):
     email = Column(String(255), unique=True)
 
     user_roles = relationship('UserRole', back_populates='user', cascade='all, delete-orphan')
-    roles = relationship('Role', secondary='user_roles', back_populates='users')
+    roles = relationship('Role', secondary='user_roles', back_populates='users', overlaps="user_roles")
     
-    user_warehouse = relationship('UserWarehouse', back_populates='user', cascade='all, delete-orphan')
-    warehouses = relationship('Warehouse', secondary='user_warehouse', back_populates='agents')
+    user_warehouse = relationship('UserWarehouse', back_populates='user', cascade='all, delete-orphan', )
+    warehouses = relationship('Warehouse', secondary='user_warehouse', back_populates='agents', overlaps="user_warehouse")
 
 class UserProvider(BaseModel):
     __tablename__ = 'user_providers'

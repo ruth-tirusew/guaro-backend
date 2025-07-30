@@ -18,13 +18,17 @@ class Warehouse(BaseModel):
     is_deleted = Column(Boolean, default=False)
 
     user_warehouse = relationship('UserWarehouse', back_populates='warehouse', cascade='all, delete-orphan')
-    agents = relationship('UserModel', secondary='user_warehouse', back_populates='warehouses')
+    agents = relationship('UserModel', secondary='user_warehouse', back_populates='warehouses', overlaps="user_warehouse")
     
     product_warehouse = relationship('ProductWarehouse', back_populates='warehouse', cascade='all, delete-orphan')
-    products = relationship('Product', secondary='product_warehouse', back_populates='warehouses')
+    products = relationship('Product', secondary='product_warehouse', back_populates='warehouses', overlaps="product,warehouse, product_warehouse") #Needs to be tested again
     
     crop_warehouse = relationship('CropWarehouse', back_populates='warehouse', cascade='all, delete-orphan')
-    crops = relationship('Crop', secondary='crop_warehouse', back_populates='warehouses')
+    crops = relationship('Crop', secondary='crop_warehouse', back_populates='warehouses', overlaps="crop_warehouse")
+    
+    goods_receiving = relationship("ProductAmountLedger", back_populates="warehouse", cascade="all, delete-orphan")
+    
+
 
 
 class UserWarehouse(BaseModel):
@@ -33,24 +37,16 @@ class UserWarehouse(BaseModel):
     user_id = Column(PG_UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
     warehouse_id = Column(PG_UUID(as_uuid=True), ForeignKey('warehouses.id', ondelete='CASCADE'), primary_key=True)
     
-    warehouse = relationship('Warehouse', back_populates='user_warehouse')
-    user = relationship('UserModel', back_populates='user_warehouse')
+    warehouse = relationship('Warehouse', back_populates='user_warehouse', overlaps="agents,warehouses")
+    user = relationship('UserModel', back_populates='user_warehouse', overlaps="agents,warehouses")
 
 class WarehouseDBSchema(PydanticBaseModel):
-    id: Optional[str]
+    id: Optional[uuid.UUID]
     description: Optional[str] = None
     location: str
     name: str
     
     model_config = {"from_attributes": True}
-    
-    @field_validator("id", mode="before")
-    @classmethod
-    def convert_uuid_to_string(cls, v):
-        if isinstance(v, uuid.UUID):
-            return str(v)
-        return v
-
 
 class WarehouseCreate(PydanticBaseModel):
     description: Optional[str] = None

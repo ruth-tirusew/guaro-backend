@@ -7,7 +7,7 @@ import uuid
 
 
 class Warehouse(PydanticBaseModel):
-    id: Optional[str]
+    id: Optional[uuid.UUID]
     description: Optional[str] = None
     location: str
     name: str
@@ -27,7 +27,7 @@ class AgentWarehouseAssignment(PydanticBaseModel):
     agent_id: str
 
 class AssignedAgent(PydanticBaseModel):
-    id: str
+    id: uuid.UUID
     first_name: constr(strip_whitespace=True)
     last_name: constr(strip_whitespace=True)
     email: EmailStr
@@ -36,13 +36,6 @@ class AssignedAgent(PydanticBaseModel):
     updated_at: datetime
 
     model_config = {"arbitrary_types_allowed":True, "from_attributes": True}
-
-    @field_validator("id", mode="before")
-    @classmethod
-    def convert_uuid_to_string(cls, v):
-        if isinstance(v, uuid.UUID):
-            return str(v)
-        return v
 
 
 class AgentsList(PydanticBaseModel):

@@ -15,15 +15,15 @@ class Role(BaseModel):
     description = Column(String(255))
     user_roles = relationship('UserRole', back_populates='role', cascade='all, delete-orphan')
     role_resources = relationship('RoleResource', back_populates='role', cascade='all, delete-orphan')
-    users = relationship('UserModel', secondary='user_roles', back_populates='roles')
+    users = relationship('UserModel', secondary='user_roles', back_populates='roles', overlaps="user_roles")
 
 
 class UserRole(BaseModel):
     __tablename__ = 'user_roles'
     user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
     role_id = Column(UUID(as_uuid=True), ForeignKey('roles.id', ondelete='CASCADE'), primary_key=True)
-    role = relationship('Role', back_populates='user_roles')
-    user = relationship('UserModel', back_populates='user_roles')
+    role = relationship('Role', back_populates='user_roles',overlaps="roles,users")
+    user = relationship('UserModel', back_populates='user_roles', overlaps="roles,users")
 
 
 class RoleResource(BaseModel):
@@ -35,20 +35,11 @@ class RoleResource(BaseModel):
 
 
 class RoleDBSchema(PydanticBaseModel):
-    id: Optional[str]
+    id: Optional[uuid.UUID]
     name: str
     description: Optional[str] = None
     
     model_config = {"from_attributes": True}
-
-    @field_validator("id", mode="before")
-    @classmethod
-    def convert_uuid_to_string(cls, v):
-        print(v)
-        if isinstance(v, uuid.UUID):
-            return str(v)
-        return v
-    
 
 class RoleCreate(PydanticBaseModel):
     name: str

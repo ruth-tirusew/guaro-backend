@@ -28,8 +28,7 @@ class FarmerRepository(IFarmerRepository):
             )
 
     def get_farmer_by_id(self, farmer_id: str) -> Optional[Farmer]:
-        uuid_obj = uuid.UUID(farmer_id)
-        return self.db.query(Farmer).filter(Farmer.id == uuid_obj).first()
+        return self.db.query(Farmer).filter(Farmer.id == farmer_id).first()
 
     def get_farmer_by_phone(self, phone_number: str) -> Optional[Farmer]:
         return self.db.query(Farmer).filter(Farmer.phone_number == phone_number).first()
@@ -101,8 +100,7 @@ class FarmerRepository(IFarmerRepository):
             )
 
     def get_address_by_id(self, address_id: str) -> Optional[Address]:
-        uuid_obj = uuid.UUID(address_id)
-        return self.db.query(Address).filter(Address.id == uuid_obj).first()
+        return self.db.query(Address).filter(Address.id == address_id).first()
 
     def get_address_by_farmer(self, farmer_id: str) -> Optional[Address]:
         farmer_uuid = uuid.UUID(farmer_id)
@@ -158,8 +156,7 @@ class FarmerRepository(IFarmerRepository):
         return self.db.query(LegalDocument).filter(LegalDocument.id == uuid_obj).first()
 
     def get_legal_documents_by_farmer(self, farmer_id: str) -> List[LegalDocument]:
-        farmer_uuid = uuid.UUID(farmer_id)
-        return self.db.query(LegalDocument).filter(LegalDocument.farmer_id == farmer_uuid).all()
+        return self.db.query(LegalDocument).filter(LegalDocument.farmer_id == farmer_id).all()
 
     def get_legal_documents_by_type(self, farmer_id: str, document_type: str) -> List[LegalDocument]:
         farmer_uuid = uuid.UUID(farmer_id)

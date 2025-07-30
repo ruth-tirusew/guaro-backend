@@ -27,7 +27,8 @@ class BiodataRepository(IBiodataRepository):
     def get_all_crops(self) -> List[Crop]:
         return self.db.query(Crop).all()
 
-    def update_crop(self, crop_id: UUID, update_data: dict) -> Optional[Crop]:
+    def update_crop(self, crop_id: str, update_data: dict) -> Optional[Crop]:
+        crop_uuid = UUID(crop_id)
         crop = self.get_crop_by_id(crop_id)
         if not crop:
             return None

@@ -1,8 +1,8 @@
-import logging
 from typing import Optional, Dict, Any
 from fastapi import HTTPException, status
 from enum import Enum
 
+from app.logging import logger
 
 class ErrorLevel(Enum):
     """Error severity levels for logging"""
@@ -16,7 +16,7 @@ class APIError(HTTPException):
     def __init__(
         self,
         status_code: int,
-        detail: str,
+        detail: Optional[str]=None,
         user_message: Optional[str] = None,
         log_level: ErrorLevel = ErrorLevel.ERROR,
         log_message: Optional[str] = None,
@@ -45,8 +45,6 @@ class APIError(HTTPException):
         self._log_error(log_message or detail)
     
     def _log_error(self, message: str):
-        logger = logging.getLogger(__name__)
-        
         log_context = {
             "status_code": self.status_code,
             "error_code": self.error_code,
@@ -58,11 +56,10 @@ class APIError(HTTPException):
         log_method(f"{message} | Context: {log_context}")
     
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        return {    
             "error": True,
             "status_code": self.status_code,
             "message": self.user_message,
-            "detail": self.detail,
             "error_code": self.error_code,
             "timestamp": self._get_timestamp()
         }
@@ -83,12 +80,10 @@ class ErrorFactory:
         context: Optional[Dict[str, Any]] = None
     ) -> APIError:
         """Create a 404 Not Found error"""
-        detail = f"{resource} not found"
         user_msg = user_message or f"The requested {resource.lower()} could not be found"
         
         return APIError(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=detail,
             user_message=user_msg,
             log_level=ErrorLevel.WARNING,
             error_code=error_code,

@@ -53,7 +53,7 @@ class FarmerService:
 
         return self._convert_farmer_to_read(farmer, address, legal_documents)
 
-    def get_farmer(self, farmer_id: str) -> Optional[FarmerRead]:
+    def get_farmer(self, farmer_id: uuid.UUID) -> Optional[FarmerRead]:
         """Get a farmer by ID with relationships"""
         farmer = self.repository.get_farmer_by_id(farmer_id)
         if not farmer:
@@ -63,7 +63,7 @@ class FarmerService:
         legal_documents = []
         
         if farmer.address_id:
-            address = self.repository.get_address_by_id(str(farmer.address_id))
+            address = self.repository.get_address_by_id(farmer.address_id)
         
         legal_documents = self.repository.get_legal_documents_by_farmer(farmer_id)
 
@@ -95,48 +95,29 @@ class FarmerService:
             legal_documents = []
             
             if farmer.address_id:
-                address = self.repository.get_address_by_id(str(farmer.address_id))
+                address = self.repository.get_address_by_id(farmer.address_id)
             
-            legal_documents = self.repository.get_legal_documents_by_farmer(str(farmer.id))
+            legal_documents = self.repository.get_legal_documents_by_farmer(farmer.id)
             
             farmer_read = self._convert_farmer_to_read(farmer, address, legal_documents)
             farmer_reads.append(farmer_read)
 
         return FarmerList(farmers=farmer_reads)
 
-    def get_farmers_by_agent(self, agent_id: str) -> List[FarmerRead]:
-        """Get all farmers assigned to a specific agent"""
-        farmers = self.repository.get_farmers_by_agent(agent_id)
-        farmer_reads = []
-        
-        for farmer in farmers:
-            address = None
-            legal_documents = []
-            
-            if farmer.address_id:
-                address = self.repository.get_address_by_id(str(farmer.address_id))
-            
-            legal_documents = self.repository.get_legal_documents_by_farmer(str(farmer.id))
-            
-            farmer_read = self._convert_farmer_to_read(farmer, address, legal_documents)
-            farmer_reads.append(farmer_read)
-
-        return farmer_reads
-
-    def update_farmer(self, farmer_id: str, update_data: FarmerUpdate) -> Optional[FarmerRead]:
+    def update_farmer(self, update_data: FarmerUpdate) -> Optional[FarmerRead]:
         """
         Update a farmer and related data (address, legal documents).
         This is a real implementation.
         """
         # Fetch the farmer
-        farmer = self.repository.get_farmer_by_id(farmer_id)
+        farmer = self.repository.get_farmer_by_id(update_data.id)
         if not farmer:
             return None
 
         # Check for phone number uniqueness if changed
         if update_data.phone_number and update_data.phone_number != farmer.phone_number:
             existing_farmer = self.repository.get_farmer_by_phone(update_data.phone_number)
-            if existing_farmer and str(existing_farmer.id) != str(farmer_id):
+            if existing_farmer and str(existing_farmer.id) != str(update_data.id):
                 raise ValueError("A farmer with this phone number already exists")
 
         # Prepare update dict for farmer fields
@@ -174,13 +155,13 @@ class FarmerService:
         legal_documents = []
         if update_data.legal_documents is not None:
             # Remove all existing legal documents for this farmer
-            existing_docs = self.repository.get_legal_documents_by_farmer(farmer_id)
+            existing_docs = self.repository.get_legal_documents_by_farmer(update_data.id)
             for doc in existing_docs:
                 self.repository.delete_legal_document(str(doc.id))
             # Add new legal documents
             for doc_data in update_data.legal_documents:
                 document_data = {
-                    'farmer_id': farmer_id,
+                    'farmer_id':update_data.id,
                     'document_type': doc_data.document_type,
                     'document_url': doc_data.document_url,
                     'issue_date': doc_data.issue_date
@@ -188,11 +169,11 @@ class FarmerService:
                 document = self.repository.create_legal_document(document_data)
                 legal_documents.append(document)
         else:
-            legal_documents = self.repository.get_legal_documents_by_farmer(farmer_id)
+            legal_documents = self.repository.get_legal_documents_by_farmer(update_data.id)
 
         return self._convert_farmer_to_read(farmer, address, legal_documents)
 
-    def delete_farmer(self, farmer_id: str) -> bool:
+    def delete_farmer(self, farmer_id: uuid.UUID) -> bool:
         """Delete a farmer and all related data"""
         farmer = self.repository.get_farmer_by_id(farmer_id)
         if not farmer:
@@ -207,11 +188,11 @@ class FarmerService:
 
         return self.repository.delete_farmer(farmer_id)
 
-    def deactivate_farmer(self, farmer_id: str) -> bool:
+    def deactivate_farmer(self, farmer_id: uuid.UUID) -> bool:
         """Deactivate a farmer"""
         return self.repository.deactivate_farmer(farmer_id)
 
-    def activate_farmer(self, farmer_id: str) -> bool:
+    def activate_farmer(self, farmer_id: uuid.UUID) -> bool:
         """Activate a farmer"""
         return self.repository.activate_farmer(farmer_id)
 

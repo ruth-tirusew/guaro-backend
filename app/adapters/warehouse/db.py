@@ -23,9 +23,8 @@ class WarehouseRepository(IWarehouseRepository):
         self.db.refresh(db_warehouse)
         return WarehouseDBSchema.model_validate(db_warehouse)
 
-    def get_warehouse_by_id(self, warehouse_id: str) -> Optional[WarehouseDBSchema]:
-        uuid_obj = UUID(warehouse_id)
-        db_warehouse = self.db.query(Warehouse).filter(Warehouse.id == uuid_obj).first()
+    def get_warehouse_by_id(self, warehouse_id: UUID) -> Optional[WarehouseDBSchema]:
+        db_warehouse = self.db.query(Warehouse).filter(Warehouse.id == warehouse_id).first()
         if db_warehouse:
             return WarehouseDBSchema.model_validate(db_warehouse)
         return None
