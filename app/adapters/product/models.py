@@ -13,16 +13,15 @@ class Product(BaseModel):
     description = Column(Text)
     price = Column(Numeric(10, 2), default=0.0)
     unit = Column(String(100))
-    available_amount = Column(Numeric(10, 2), default=0.0)
     
     price_ledger = relationship("ProductPriceLedger", back_populates="product", cascade="all, delete-orphan")
     goods_receiving = relationship("ProductAmountLedger", back_populates="product", cascade="all, delete-orphan")
     
     product_warehouse = relationship('ProductWarehouse', back_populates='product', cascade='all, delete-orphan')
-    warehouses = relationship('Warehouse', secondary='product_warehouse', back_populates='products')
+    warehouses = relationship('Warehouse', secondary='product_warehouse', back_populates='products', overlaps="product_warehouse")
 
     product_crop = relationship('ProductCrop', back_populates='product', cascade='all, delete-orphan')
-    raw_materials = relationship('Crop', secondary='product_crop', back_populates='products')
+    raw_materials = relationship('Crop', secondary='product_crop', back_populates='products', overlaps="product_crop")
 
 
 class ProductCrop(BaseModel):
@@ -31,11 +30,8 @@ class ProductCrop(BaseModel):
     product_id = Column(PG_UUID(as_uuid=True), ForeignKey('products.id', ondelete='CASCADE'), primary_key=True)
     crop_id = Column(PG_UUID(as_uuid=True), ForeignKey('crops.id', ondelete='CASCADE'), primary_key=True)
 
-    crop = relationship('Crop', back_populates='product_crop')
-    product = relationship('Product', back_populates='product_crop')
-
-
-
+    crop = relationship('Crop', back_populates='product_crop', overlaps="products,raw_materials")
+    product = relationship('Product', back_populates='product_crop', overlaps="products,raw_materials")
 
 class ProductPriceLedger(BaseModel):
     __tablename__ = "product_price_ledger"
@@ -53,8 +49,10 @@ class ProductAmountLedger(BaseModel):
     previous_amount = Column(Numeric(10, 2), default=0.0)
     updated_amount = Column(Numeric(10, 2), default=0.0)
     product_id = Column(PG_UUID(as_uuid=True), ForeignKey("products.id"), nullable=False)
+    warehouse_id = Column(PG_UUID(as_uuid=True), ForeignKey("warehouses.id"), nullable=False)
 
     product = relationship("Product", back_populates="goods_receiving")
+    warehouse = relationship("Warehouse", back_populates="goods_receiving")
 
 
 class ProductWarehouse(BaseModel):
@@ -62,6 +60,7 @@ class ProductWarehouse(BaseModel):
     
     product_id = Column(PG_UUID(as_uuid=True), ForeignKey('products.id', ondelete='CASCADE'), primary_key=True)
     warehouse_id = Column(PG_UUID(as_uuid=True), ForeignKey('warehouses.id', ondelete='CASCADE'), primary_key=True)
+    available_amount = Column(Numeric(10, 2), default=0.0)
 
-    warehouse = relationship('Warehouse', back_populates='product_warehouse')
-    product = relationship('Product', back_populates='product_warehouse')
+    warehouse = relationship('Warehouse', back_populates='product_warehouse', overlaps="product, warehouses")
+    product = relationship('Product', back_populates='product_warehouse', overlaps="product, warehouses")

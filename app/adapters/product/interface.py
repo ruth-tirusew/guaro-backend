@@ -13,11 +13,11 @@ class IProductRepository(ABC):
         pass
 
     @abstractmethod
-    def create(self, product: Product) -> Product:
+    def create(self, product: dict) -> Product:
         pass
 
     @abstractmethod
-    def update(self, product_id: UUID, product: Product) -> Product:
+    def update(self, product_id: UUID, product: dict) -> Product:
         pass
 
     @abstractmethod
@@ -29,7 +29,7 @@ class IProductRepository(ABC):
         pass
 
     @abstractmethod
-    def receive(self, product_id: UUID, amount: float) -> Product:
+    def receive(self, product_id: UUID, amount: float, warehouse_id: UUID) -> Product:
         pass
 
     @abstractmethod
@@ -48,4 +48,10 @@ class IProductRepository(ABC):
     def search(self, query: str) -> List[Product]:
         pass
 
-    
+    @abstractmethod
+    def remove_product_crop(self, data: dict):
+        pass
+
+    @abstractmethod
+    def add_product_crop(self, data: dict):
+        pass
