@@ -47,7 +47,7 @@ def init_containers():
 
     container.register("biodata_service", lambda: BiodataService(
         farmer_service=container.resolve("farmer_service"),
-        biodata_repository=BiodataRepository(next(get_db))
+        biodata_repository=BiodataRepository(next(get_db()))
     ))
 
     container.register(
@@ -76,6 +76,7 @@ def init_containers():
     container.register(
         "product_service",
         lambda: ProductService(
+            crop_service=container.resolve("biodata_service"),
             product_repository=ProductRepository(next(get_db())),
             warehouse_service=container.resolve("warehouse_service")
         )
