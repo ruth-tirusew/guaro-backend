@@ -6,16 +6,12 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from pydantic import ValidationError
 import logging
 import traceback
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.config import settings, fastapi_config
-from app.database import Base, engine
+from app.database import engine
 from app.logging import logger
-from app.adapters.authentication.keycloak import KeycloakAdapter
-from app.dependencies import init_containers
 from app.core.exceptions import APIError, ErrorFactory
-
-init_containers()
 
 from app.modules.authentication.router import router as authentication_router
 from app.modules.employees.router import router as employee_router
@@ -209,18 +205,18 @@ async def shutdown_event():
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     """Log all requests for debugging purposes"""
-    start_time = datetime.utcnow()
+    start_time = datetime.now(timezone.utc)
     
     try:
         response = await call_next(request)
-        process_time = (datetime.utcnow() - start_time).total_seconds()
+        process_time = (datetime.now(timezone.utc) - start_time).total_seconds()
         logger.info(
             f"{request.method} {request.url} - {response.status_code} - {process_time:.3f}s"
         )
         
         return response
     except Exception as e:
-        process_time = (datetime.utcnow() - start_time).total_seconds()
+        process_time = (datetime.now(timezone.utc) - start_time).total_seconds()
         logger.error(
             f"{request.method} {request.url} - ERROR: {str(e)} - {process_time:.3f}s"
         )

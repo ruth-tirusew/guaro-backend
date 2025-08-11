@@ -1,39 +1,38 @@
-from fastapi import APIRouter, HTTPException, status
-from app.container import get_container
+from fastapi import APIRouter, HTTPException, status, Depends
 from app.modules.warehouse.schema import Warehouse, WarehouseCreate, WarehouseList, AgentsList
+from app.modules.warehouse.service import WarehouseService
+from app.dependencies import WarehouseServiceDep
 
 router = APIRouter(prefix="/warehouse", tags=["Warehouse"])
 
-container = get_container()
-warehouse_service = container.resolve("warehouse_service")
-
 @router.post("/", response_model=Warehouse, status_code=status.HTTP_201_CREATED)
-def create_warehouse(data: WarehouseCreate):
+def create_warehouse(data: WarehouseCreate, warehouse_service: WarehouseServiceDep):
     try:
         return warehouse_service.create_warehouse(data)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 @router.get("/", status_code=status.HTTP_200_OK, response_model=WarehouseList)
-def get_all_warehouses():
+def get_all_warehouses(warehouse_service: WarehouseServiceDep):
     return warehouse_service.get_all_warehouses()
 
 @router.get("/{id}", response_model=Warehouse, status_code=status.HTTP_200_OK)
-def get_warehouse_by_id(id: str):
+def get_warehouse_by_id(id: str, warehouse_service: WarehouseServiceDep):
     return warehouse_service.get_warehouse_by_id(id)
 
 @router.put("/", response_model=Warehouse, status_code=status.HTTP_200_OK)
-def update_warehouse(data: Warehouse):
+def update_warehouse(data: Warehouse, warehouse_service: WarehouseServiceDep):
     return warehouse_service.update_warehouse(data)
 
 @router.put("/{warehouse_id}/{agent_id}", status_code=status.HTTP_204_NO_CONTENT)
 def assign_agent(
     warehouse_id: str, 
-    agent_id: str
+    agent_id: str,
+    warehouse_service: WarehouseServiceDep,
 ):
     return warehouse_service.assign_agent(agent_id, warehouse_id)
 
 @router.get("/{id}/agent",response_model=AgentsList, status_code=status.HTTP_200_OK)
-def get_assigned_agent(id: str):
+def get_assigned_agent(id: str, warehouse_service: WarehouseServiceDep):
     return warehouse_service.get_assigned_agent(id)
 
