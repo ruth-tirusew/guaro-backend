@@ -112,7 +112,7 @@ class TestAuthenticationService:
         
         # Assert
         mock_adapter.create_user.assert_called_once()
-        args, kwargs = mock_adapter.create_user.call_args
+        args, _ = mock_adapter.create_user.call_args
         called_auth_user_create = args[0] 
         
         assert isinstance(called_auth_user_create, AuthenticationUserCreate)
@@ -210,10 +210,10 @@ class TestAuthenticationService:
         new_password="atotallynewpassword"
         result = auth_service.reset_token(reset_token, new_password)
         if not result:
-            raise("Failed to reset token")
+            raise Exception("Failed to reset token")
 
         credentials =UserCredentials(username=sample_user_info.username, password=new_password)
-        token = auth_service.authenticate(credentials)
+        auth_service.authenticate(credentials)
         
 
     # --- Exception Handling Tests ---

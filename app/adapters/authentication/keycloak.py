@@ -82,17 +82,7 @@ class KeycloakAdapter(AuthAdapterInterface):
     def verify_token(self, token: str) -> Dict[str, Any]:
         """Verify and decode JWT token"""
         try:
-            public_key = self.keycloak_openid.public_key()
-            key = f"-----BEGIN PUBLIC KEY-----\n{public_key}\n-----END PUBLIC KEY-----"
-           
-            decoded_token = jwt.decode(
-                token,
-                key,
-                algorithms=["RS256"],
-                audience=self.client_id,
-                options={"verify_signature": True, "verify_aud": True, "verify_exp": True}
-            )
-            
+            decoded_token = self.keycloak_openid.decode_token(token)  
             return decoded_token
             
         except JWTError as e:
@@ -193,7 +183,7 @@ class KeycloakAdapter(AuthAdapterInterface):
 
             user = self.keycloak_admin.get_user(user_id)
             return UserInfo(
-                id=user.get("id"),
+                id=user_id,
                 username=user.get("username"),
                 email=user.get("email"),
                 first_name=user.get("firstName"),
