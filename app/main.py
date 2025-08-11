@@ -18,6 +18,7 @@ from app.core.exceptions import APIError, ErrorFactory
 init_containers()
 
 from app.modules.authentication.router import router as authentication_router
+from app.modules.employees.router import router as employee_router
 from app.modules.farmers.router import router as farmer_router
 from app.modules.biodata.router import router as biodata_router
 from app.modules.products.router import router as product_router
@@ -26,9 +27,9 @@ from app.modules.roles.router import router as role_router
 from app.modules.warehouse.router import router as warehouse_router
 from app.modules.users.router import router as user_router
 
-app = FastAPI(**fastapi_config)
+from app.utils.middlewares.authorization import auth_middleware
 
-Base.metadata.create_all(bind=engine)
+app = FastAPI(**fastapi_config)
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,8 +39,15 @@ app.add_middleware(
     allow_credentials=True,
 )
 
+# Add authorization middleware
+@app.middleware("http")
+async def authorization_middleware(request: Request, call_next):
+    """Authorization middleware for role-based access control"""
+    return await auth_middleware.middleware(request, call_next)
+
 app.include_router(authentication_router, prefix="/api/v1")
 app.include_router(biodata_router, prefix="/api/v1")
+app.include_router(employee_router, prefix="/api/v1")
 app.include_router(farmer_router, prefix="/api/v1")
 app.include_router(product_router, prefix="/api/v1")
 app.include_router(role_router, prefix="/api/v1")
@@ -89,6 +97,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.exception_handler(ValidationError)
 async def pydantic_validation_handler(request: Request, exc: ValidationError):
+    print(exc)
     api_error = ErrorFactory.validation_error(
         field="request_body",
         user_message="Invalid data format provided",

@@ -11,9 +11,7 @@ class Settings(BaseSettings):
     KEYCLOAK_CLIENT_SECRET: str
     KEYCLOAK_CLIENT_ID:str
 
-
- 
-    DATABASE_URL: str = "sqlite:///./test.db"
+    DATABASE_URL: str 
     
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 

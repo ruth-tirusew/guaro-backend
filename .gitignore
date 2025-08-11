@@ -4,3 +4,6 @@
 *.db
 **/.pytest_cache/
 **/.vscode/
+**/migrations/versions/
+**/script.py.mako
+**/alembic/
