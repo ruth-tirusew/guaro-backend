@@ -1,6 +1,8 @@
-from typing import Optional, Dict, Any
-from fastapi import HTTPException, status
+from datetime import datetime, timezone
 from enum import Enum
+from fastapi import HTTPException, status
+from typing import Optional, Dict, Any
+
 
 from app.logging import logger
 
@@ -66,8 +68,7 @@ class APIError(HTTPException):
     
     def _get_timestamp(self) -> str:
         """Get current timestamp for error tracking"""
-        from datetime import datetime
-        return datetime.utcnow().isoformat() + "Z"
+        return datetime.now(timezone.utc).isoformat() + "Z"
 
 
 class ErrorFactory:

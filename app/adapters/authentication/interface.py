@@ -39,7 +39,7 @@ class AuthenticationCredential(BaseModel):
 
 class AuthenticationUserCreate(BaseModel):
     username: str
-    email: str = None
+    email: Optional[str]
     firstName: str
     lastName: str
     enabled: bool = True

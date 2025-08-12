@@ -41,15 +41,17 @@ async def authorization_middleware(request: Request, call_next):
     """Authorization middleware for role-based access control"""
     return await auth_middleware.middleware(request, call_next)
 
-app.include_router(authentication_router, prefix="/api/v1")
-app.include_router(biodata_router, prefix="/api/v1")
-app.include_router(employee_router, prefix="/api/v1")
-app.include_router(farmer_router, prefix="/api/v1")
-app.include_router(product_router, prefix="/api/v1")
-app.include_router(role_router, prefix="/api/v1")
-app.include_router(resource_router, prefix="/api/v1")
-app.include_router(user_router, prefix="/api/v1")
-app.include_router(warehouse_router, prefix="/api/v1")
+prefix ="/api/v1"
+
+app.include_router(authentication_router, prefix=prefix)
+app.include_router(biodata_router, prefix=prefix)
+app.include_router(employee_router, prefix=prefix)
+app.include_router(farmer_router, prefix=prefix)
+app.include_router(product_router, prefix=prefix)
+app.include_router(role_router, prefix=prefix)
+app.include_router(resource_router, prefix=prefix)
+app.include_router(user_router, prefix=prefix)
+app.include_router(warehouse_router, prefix=prefix)
 
 
 @app.exception_handler(APIError)
@@ -157,7 +159,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    error_id = f"error_{int(datetime.utcnow().timestamp())}"
+    error_id = f"error_{int(datetime.now(timezone.utc))}"
     
     logger.error(
         f"Unhandled exception [{error_id}]: {str(exc)}",
