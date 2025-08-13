@@ -159,7 +159,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    error_id = f"error_{int(datetime.now(timezone.utc))}"
+    error_id = f"error_{datetime.timestamp}"
     
     logger.error(
         f"Unhandled exception [{error_id}]: {str(exc)}",

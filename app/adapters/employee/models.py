@@ -21,7 +21,7 @@ class Department(BaseModel):
     created_by = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=False)
     updated_by = Column(PG_UUID(as_uuid=True), ForeignKey('users.id'), nullable=True)
 
-    employees = relationship('EmployeeProfile', back_populates='department', cascade="all, delete-orphan", viewonly=True)
+    employees = relationship('EmployeeProfile', back_populates='department')
 
 
 # ====================== EMPLOYEE PROFILE MODELS ======================
@@ -29,7 +29,6 @@ class EmployeeProfile(BaseModel):
     __tablename__ = "employee_profiles"
     
     # Basic Information
-    # employee_id = Column(String(50), unique=True, nullable=False)
     image_url = Column(String(500), nullable=True)
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
@@ -44,7 +43,7 @@ class EmployeeProfile(BaseModel):
     # Employment Details
     employee_type = Column(SQLEnum(EmployeeType), nullable=False)
     department_id = Column(PG_UUID(as_uuid=True), ForeignKey('departments.id'), nullable=False)
-    department = relationship('Department', back_populates='employees', viewonly=True)
+    department = relationship('Department', back_populates='employees')
     position = Column(String(100), nullable=False)
     hire_date = Column(DateTime, nullable=False)
     termination_date = Column(DateTime, nullable=True)
@@ -66,11 +65,15 @@ class EmployeeProfile(BaseModel):
     notes = Column(Text, nullable=True)
     is_active = Column(Boolean, default=True)
     
-    # Relationships
     user_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), unique=True, nullable=True)
-
-    # Relationship definitions
     user = relationship("UserModel", backref="employee_profile")
+        
+    hired_by_id = Column(PG_UUID(as_uuid=True), ForeignKey("employee_profiles.id"), nullable=True)
+    hired_by = relationship(
+        "EmployeeProfile", 
+        remote_side="EmployeeProfile.id", 
+        backref="hired_employees"
+    )
     
     # Document relationships
     documents = relationship("EmployeeDocument", back_populates="employee", cascade="all, delete-orphan")
@@ -81,10 +84,7 @@ class EmployeeProfile(BaseModel):
     # Education relationships
     educations = relationship("EmployeeEducation", back_populates="employee", cascade="all, delete-orphan")
 
-    hired_by_id = Column(PG_UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
-    hired_by = relationship("UserModel", backref="hired_employees")
-
-    # # Performance relationships
+    # Performance relationships
     performance_reviews = relationship(
         "EmployeePerformanceReview", 
         back_populates="employee", 
@@ -98,8 +98,7 @@ class EmployeeProfile(BaseModel):
         cascade="all, delete-orphan"
     )
 
-    
-    # # Leave relationships
+    # Leave relationships
     leave_records = relationship(
         "EmployeeLeave", 
         back_populates="employee", 
@@ -113,7 +112,7 @@ class EmployeeProfile(BaseModel):
         cascade="all, delete-orphan"
     )
     
-    # # # Salary ledger relationships 
+    # Salary ledger relationships 
     salary_ledger = relationship(
         "EmployeeSalaryLedger", 
         back_populates="employee", 
@@ -159,8 +158,10 @@ class EmployeeProfile(BaseModel):
         except Exception as e:
             print(e)
 
+
 class EmployeeExperience(BaseModel):
     __tablename__ = "employee_experiences"
+    
     employee_id = Column(PG_UUID(as_uuid=True), ForeignKey('employee_profiles.id'), nullable=False)
     company_name = Column(String(255), nullable=False)
     position = Column(String(255), nullable=False)
@@ -168,14 +169,20 @@ class EmployeeExperience(BaseModel):
     end_date = Column(DateTime, nullable=True)
     description = Column(Text, nullable=True)
 
+    employee = relationship("EmployeeProfile", back_populates="experiences")
+
+
 class EmployeeEducation(BaseModel):
     __tablename__ = "employee_educations"
+    
     employee_id = Column(PG_UUID(as_uuid=True), ForeignKey('employee_profiles.id'), nullable=False)
     school_name = Column(String(255), nullable=False)
     degree = Column(String(255), nullable=False)
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=True)
     description = Column(Text, nullable=True)
+
+    employee = relationship("EmployeeProfile", back_populates="educations")
 
 
 class EmployeeSalaryLedger(BaseModel):
@@ -184,18 +191,18 @@ class EmployeeSalaryLedger(BaseModel):
     employee_id = Column(PG_UUID(as_uuid=True), ForeignKey("employee_profiles.id"), nullable=False)
     previous_salary = Column(Numeric(12, 2), nullable=False)
     updated_salary = Column(Numeric(12, 2), nullable=False)
-    effective_date = Column(DateTime, default=datetime.utcnow, nullable=False)
+    effective_date = Column(DateTime, default=datetime.now(timezone.utc), nullable=False)
     reason = Column(String(255), nullable=True)
     approved_by = Column(PG_UUID(as_uuid=True), ForeignKey("employee_profiles.id"), nullable=True)
     approval_date = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
     
-    employee: Mapped["EmployeeProfile"] = relationship(
+    employee = relationship(
         "EmployeeProfile", 
         back_populates="salary_ledger", 
         foreign_keys=[employee_id]
     )
-    approver: Mapped["EmployeeProfile"] = relationship(
+    approver = relationship(
         "EmployeeProfile", 
         back_populates="approved_salary_ledger", 
         foreign_keys=[approved_by]
@@ -217,12 +224,13 @@ class EmployeeDocument(BaseModel):
     
     employee = relationship("EmployeeProfile", back_populates="documents")
 
+
 class EmployeePerformanceReview(BaseModel):
     __tablename__ = "employee_performance_reviews"
 
     employee_id = Column(PG_UUID(as_uuid=True), ForeignKey("employee_profiles.id"), nullable=False)
     reviewer_id = Column(PG_UUID(as_uuid=True), ForeignKey("employee_profiles.id"), nullable=False)
-    review_date = Column(DateTime, default=datetime.utcnow, nullable=False)
+    review_date = Column(DateTime, default=datetime.now(timezone.utc), nullable=False)
     review_period_start = Column(DateTime, nullable=False)
     review_period_end = Column(DateTime, nullable=False)
     overall_rating = Column(Integer, nullable=True)
@@ -231,17 +239,17 @@ class EmployeePerformanceReview(BaseModel):
     areas_for_improvement = Column(Text, nullable=True)
     next_review_date = Column(DateTime, nullable=True)
 
-    employee: Mapped["EmployeeProfile"] = relationship(
+    employee = relationship(
         "EmployeeProfile", 
         back_populates="performance_reviews", 
         foreign_keys=[employee_id]
     )
-    reviewer: Mapped["EmployeeProfile"] = relationship(
+    reviewer = relationship(
         "EmployeeProfile", 
         back_populates="reviews_given", 
         foreign_keys=[reviewer_id]
     )
-    
+
 
 class EmployeeLeave(BaseModel):
     __tablename__ = "employee_leave"
@@ -257,14 +265,13 @@ class EmployeeLeave(BaseModel):
     approval_date = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
     
-    employee: Mapped["EmployeeProfile"] = relationship(
+    employee = relationship(
         "EmployeeProfile", 
         back_populates="leave_records", 
         foreign_keys=[employee_id]
     )
-    approver: Mapped["EmployeeProfile"] = relationship(
+    approver = relationship(
         "EmployeeProfile", 
         back_populates="approved_leaves", 
         foreign_keys=[approved_by]
     )
-
