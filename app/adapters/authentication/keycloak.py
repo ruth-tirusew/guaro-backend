@@ -1,3 +1,4 @@
+import json
 from jose import JWTError, jwt
 import requests
 from keycloak import KeycloakOpenID, KeycloakAdmin
@@ -233,8 +234,9 @@ class KeycloakAdapter(AuthAdapterInterface):
             
             if "exists" in error_msg or "conflict" in error_msg:
                 logger.error(f"User creation failed - user already exists: {user_info.username}")
+                decoded_error_message = e.error_message.decode('utf-8') 
                 raise UserCreationError(
-                    f"User with username '{user_info.username}' already exists",
+                    json.loads(decoded_error_message).get("errorMessage"),
                     user_data=user_context,
                     original_error=e
                 )

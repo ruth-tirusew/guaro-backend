@@ -62,11 +62,6 @@ class AuthAdapterInterface(ABC):
         pass
 
     @abstractmethod
-    def create_auth_client(self):
-        """Create and return an underlying auth client instance"""
-        pass
-
-    @abstractmethod
     def verify_token(self, token):
         """Verify the validity of an authentication token."""
         pass 
