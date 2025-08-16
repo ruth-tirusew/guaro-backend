@@ -84,6 +84,10 @@ class AuthAdapterInterface(ABC):
             UserInfo: The created user information.
         """
         pass
+    
+    @abstractmethod
+    def delete_user(self, user_id: str)->None:
+        pass
 
     @abstractmethod
     def update_user(self, user:UpdateUserModel)->UserInfo:

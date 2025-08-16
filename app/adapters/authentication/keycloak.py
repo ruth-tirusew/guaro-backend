@@ -262,14 +262,34 @@ class KeycloakAdapter(AuthAdapterInterface):
                 user_data={"username": user_info.username, "email": user_info.email},
                 original_error=e
             )
-    
+    def delete_user(self, user_id)-> None:
+        try:
+            self.keycloak_admin.delete_user(user_id=user_id)
+        except KeycloakError as e:
+            error_msg = str(e).lower()
+            
+            if "404" in error_msg or "not found" in error_msg:
+                logger.error(f"User update failed - user not found: {user_info.id}")
+                raise UserNotFoundError(
+                    f"User with ID {user_info.id} not found",
+                    original_error=e
+                )  
+
+        except Exception as e:
+            if isinstance(e, (UserNotFoundError, UserUpdateError)):
+                raise
+            logger.error(f"Unexpected error during user delete: {str(e)}")
+            raise UserUpdateError(
+                "User delete failed due to unexpected error",
+                user_id=user_info.id,
+                original_error=e
+            )
     def update_user(self, user_info: UpdateUserModel) -> UserInfo:
         """Update user information in Keycloak"""
         try:
-            # Note: update_user typically returns None on success
             self.keycloak_admin.update_user(
                 user_id=user_info.id, 
-                payload=user_info.dict(exclude={'id'})  # Exclude ID from payload
+                payload=user_info.dict(exclude={'id'})
             )
             
             # Get the updated user data
