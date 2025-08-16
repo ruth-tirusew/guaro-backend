@@ -83,8 +83,7 @@ class EmployeeRepository(IEmployeeRepository):
         employee = self.get_employee_by_id(employee_id)
         if not employee:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found.")
-        
-        self.db.delete(employee)
+        employee.is_deleted=True
         self.db.commit()
         return True
 
@@ -167,8 +166,7 @@ class EmployeeRepository(IEmployeeRepository):
         document = self.get_employee_document_by_id(document_id)
         if not document:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee document not found.")
-        
-        self.db.delete(document)
+        document.is_deleted=True
         self.db.commit()
         return True
 
@@ -219,8 +217,7 @@ class EmployeeRepository(IEmployeeRepository):
         review = self.get_performance_review_by_id(review_id)
         if not review:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Performance review not found.")
-        
-        self.db.delete(review)
+        review.is_deleted=True
         self.db.commit()
         return True
 
@@ -283,8 +280,7 @@ class EmployeeRepository(IEmployeeRepository):
         leave = self.get_leave_request_by_id(leave_id)
         if not leave:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Leave request not found.")
-        
-        self.db.delete(leave)
+        leave.is_deleted=True
         self.db.commit()
         return True
 
@@ -336,7 +332,7 @@ class EmployeeRepository(IEmployeeRepository):
         if not ledger_entry:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Salary ledger entry not found.")
         
-        self.db.delete(ledger_entry)
+        ledger_entry.is_deleted=True
         self.db.commit()
         return True
 

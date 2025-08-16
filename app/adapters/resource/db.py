@@ -41,5 +41,5 @@ class ResourceRepository(IResourceRepository):
         uuid_obj = uuid.UUID(resource_id)
         db_resource = self.db.query(Resource).filter(Resource.id == uuid_obj).first()
         if db_resource:
-            self.db.delete(db_resource)
+            db_resource.is_deleted=True
             self.db.commit()

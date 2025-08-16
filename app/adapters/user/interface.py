@@ -9,7 +9,7 @@ class IUserRepository(ABC):
         pass
 
     @abstractmethod
-    def create_user_proviider(self, user_id: str, provider_id: str) -> UserProvider:
+    def create_user_provider(self, user_id: str, provider_id: str) -> UserProvider:
         pass
 
     @abstractmethod

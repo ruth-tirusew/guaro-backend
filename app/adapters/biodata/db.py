@@ -53,7 +53,7 @@ class BiodataRepository(IBiodataRepository):
     def delete_crop(self, crop_id: UUID) -> bool:
         crop = self.get_crop_by_id(crop_id)
         if crop:
-            self.db.delete(crop)
+            crop.is_deleted=True
             self.db.commit()
             return True
         return False
@@ -96,7 +96,7 @@ class BiodataRepository(IBiodataRepository):
     def delete_initial_biodata(self, biodata_id: UUID) -> bool:
         biodata = self.get_initial_biodata_by_id(biodata_id)
         if biodata:
-            self.db.delete(biodata)
+            biodata.is_deleted=True
             self.db.commit()
             return True
         return False

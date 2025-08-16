@@ -52,7 +52,7 @@ class WarehouseRepository(IWarehouseRepository):
     def delete_warehouse(self, warehouse_id: str) -> None:
         db_warehouse = self.db.query(Warehouse).filter(Warehouse.id == warehouse_id).first()
         if db_warehouse:
-            self.db.delete(db_warehouse)
+            db_warehouse.is_deleted=True
             self.db.commit()
 
     def assign_agent(self, agent_id: str, warehouse_id: str):
@@ -65,7 +65,7 @@ class WarehouseRepository(IWarehouseRepository):
             self.db.commit()
 
         else:
-            self.db.delete(existing)
+            existing.is_deleted=True
             self.db.commit()
 
     def unassign_agent(self, user_id: str, warehouse_id: str):
@@ -73,7 +73,7 @@ class WarehouseRepository(IWarehouseRepository):
         user_uuid = UUID(user_id)
         db_warehouse_resource = self.db.query(UserWarehouse).filter_by(warehouse_id=warehouse_uuid, user_id=user_uuid).first()
         if db_warehouse_resource:
-            self.db.delete(db_warehouse_resource)
+            db_warehouse_resource.is_deleted=True
             self.db.commit()
 
     def get_assigned_agent(self, warehouse_id: str):

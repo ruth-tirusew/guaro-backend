@@ -98,7 +98,7 @@ class ProductRepository(IProductRepository):
         ).first()
         
         if existing:
-            self.db.delete(existing)
+            existing.is_deleted=True
             self.db.commit()
         else:
             raise ValueError("Product-Category relationship not found")
@@ -359,7 +359,8 @@ class ProductRepository(IProductRepository):
         ).first()
         
         if existing:
-            self.db.delete(existing)
+            
+            existing.is_deleted=True
             self.db.commit()
         else:
             raise ValueError("Product-Warehouse-Batch relationship not found")
@@ -421,7 +422,7 @@ class ProductRepository(IProductRepository):
         ).first()
         
         if existing:
-            self.db.delete(existing)
+            existing.is_deleted=True
             self.db.commit()
         else:
             raise ValueError("Product-Crop relationship not found")

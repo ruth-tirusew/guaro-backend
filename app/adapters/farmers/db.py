@@ -122,7 +122,7 @@ class FarmerRepository(IFarmerRepository):
     def delete_address(self, address_id: str) -> bool:
         address = self.get_address_by_id(address_id)
         if address:
-            self.db.delete(address)
+            address.is_deleted=True
             self.db.commit()
             return True
         return False
@@ -173,7 +173,7 @@ class FarmerRepository(IFarmerRepository):
     def delete_legal_document(self, document_id: str) -> bool:
         document = self.get_legal_document_by_id(document_id)
         if document:
-            self.db.delete(document)
+            document.is_deleted=True
             self.db.commit()
             return True
         return False
