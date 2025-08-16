@@ -18,6 +18,7 @@ from app.modules.employees.router import router as employee_router
 from app.modules.farmers.router import router as farmer_router
 from app.modules.biodata.router import router as biodata_router
 from app.modules.products.router import router as product_router
+from app.modules.products.router import category_router
 from app.modules.resources.router import router as resource_router
 from app.modules.roles.router import router as role_router
 from app.modules.warehouse.router import router as warehouse_router
@@ -48,6 +49,7 @@ app.include_router(biodata_router, prefix=prefix)
 app.include_router(employee_router, prefix=prefix)
 app.include_router(farmer_router, prefix=prefix)
 app.include_router(product_router, prefix=prefix)
+app.include_router(category_router, prefix=prefix)
 app.include_router(role_router, prefix=prefix)
 app.include_router(resource_router, prefix=prefix)
 app.include_router(user_router, prefix=prefix)
