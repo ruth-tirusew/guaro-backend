@@ -214,7 +214,9 @@ class IFarmerRepository(ABC):
     def delete_legal_document(self, document_id: str) -> bool:
         pass
 
-
+    @abstractmethod
+    def add_farmer_contract(self, contract_data: dict):
+        pass
 
     @abstractmethod
     def get_farmer_with_relationships(self, farmer_id: str) -> Optional[Farmer]:

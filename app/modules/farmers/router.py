@@ -8,35 +8,35 @@ from app.modules.farmers.schemas import (
     FarmerCreate, FarmerUpdate, FarmerRead, FarmerList,
     AddressCreate, AddressUpdate, AddressRead, AddressList,
     LegalDocumentCreate, LegalDocumentUpdate, LegalDocumentRead, LegalDocumentList,
-    FarmerDetailResponse
+    FarmerDetailResponse, FarmerContractCreate, FarmerContractUpdate
 )
 from app.dependencies import FarmerServiceDep
 
 router = APIRouter(prefix="/farmers", tags=["Farmers"])
 
 
-@router.get("/details/{id}", response_model=Optional[FarmerRead])
+@router.get("/details/{id}", response_model=Optional[FarmerRead], status_code=status.HTTP_200_OK)
 def get_farmer_by_id(id: UUID, farmer_service:FarmerServiceDep):
     print(id)
     return farmer_service.get_farmer(id)
 
-@router.get("", response_model=FarmerList)
+@router.get("", response_model=FarmerList, status_code=status.HTTP_200_OK)
 def get_all_farmers(farmer_service:FarmerServiceDep):
     return farmer_service.list_farmers()
 
-@router.get("/filter-by-name", response_model=FarmerList)
+@router.get("/filter-by-name", response_model=FarmerList, status_code=status.HTTP_200_OK)
 def search_farmers_by_name(farmer_service:FarmerServiceDep, name: str =Query()):
     return farmer_service.search_farmers_by_name(name)
 
-@router.get("/filter-by-date-range", response_model=FarmerList)
+@router.get("/filter-by-date-range", response_model=FarmerList, status_code=status.HTTP_200_OK)
 def get_farmers_by_registration_date_range(farmer_service:FarmerServiceDep, start_date: datetime=Query(), end_date: datetime=Query()):
     return farmer_service.get_farmers_by_registration_date_range(start_date=start_date, end_date=end_date)
 
-@router.post("", response_model=FarmerRead)
+@router.post("", response_model=FarmerRead, status_code=status.HTTP_200_OK)
 def create_farmer(farmer_data: FarmerCreate, farmer_service:FarmerServiceDep):
     return farmer_service.create_farmer(farmer_data=farmer_data)
 
-@router.put("/", response_model=FarmerRead)
+@router.put("/", response_model=FarmerRead, status_code=status.HTTP_200_OK)
 def update_farmer(farmer_data: FarmerUpdate, farmer_service:FarmerServiceDep):
     return farmer_service.update_farmer(farmer_data)
 
@@ -44,11 +44,14 @@ def update_farmer(farmer_data: FarmerUpdate, farmer_service:FarmerServiceDep):
 def delete_farmer(id: str, farmer_service:FarmerServiceDep):
     return farmer_service.delete_farmer(id)
 
-@router.put("/{id}/activate")
+@router.put("/{id}/activate", status_code=status.HTTP_200_OK)
 def activate_farmer(id: UUID, farmer_service:FarmerServiceDep):
     return farmer_service.activate_farmer(id)
 
-@router.put("/{id}/deactivate")
+@router.put("/{id}/deactivate", status_code=status.HTTP_200_OK)
 def deactivate_farmer(id: UUID, farmer_service:FarmerServiceDep):
     return farmer_service.deactivate_farmer(id)
 
+@router.post("/contract", status_code=status.HTTP_204_NO_CONTENT)
+def create_contract(contract_data: FarmerContractCreate):
+    return farmer_service.create_farmer_contract(contract_data)

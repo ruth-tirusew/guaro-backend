@@ -1,7 +1,7 @@
 import uuid
 import re
 from datetime import datetime
-from pydantic import BaseModel, field_validator, model_validator,Field
+from pydantic import BaseModel, field_validator, model_validator,Field, HttpUrl
 from typing import Optional, List
 
 from app.adapters.farmers.models import Gender, VerificationStatus
@@ -14,13 +14,6 @@ class AddressBase(BaseModel):
     zone_or_sub_city: str
     kebele: str
     woreda: str
-
-    @field_validator("zone_or_sub_city", "kebele", "woreda")
-    @classmethod
-    def validate_location_fields(cls, v):
-        if not v or not v.strip():
-            raise ValueError("Location field must not be empty")
-        return v.strip()
 
 class AddressCreate(AddressBase):
     pass
@@ -39,7 +32,7 @@ class AddressRead(AddressBase):
 # ====================== LEGAL DOCUMENT SCHEMAS ======================
 class LegalDocumentBase(BaseModel):
     document_type: str
-    document_url: str
+    document_url: HttpUrl
     issue_date: Optional[datetime] = None
 
 class LegalDocumentCreate(LegalDocumentBase):
@@ -47,7 +40,7 @@ class LegalDocumentCreate(LegalDocumentBase):
 
 class LegalDocumentUpdate(BaseModel):
     document_type: Optional[str] = None
-    document_url: Optional[str] = None
+    document_url: Optional[HttpUrl] = None
     issue_date: Optional[datetime] = None
 
 
@@ -55,6 +48,17 @@ class LegalDocumentRead(LegalDocumentBase):
     id: uuid.UUID
     farmer_id: str
     model_config = {"from_attributes": True}
+
+class FarmerContractBase(BaseModel):
+    farmer_id: Optional[uuid.UUID]=None
+    contract_url: HttpUrl
+    contract_name: str
+
+class FarmerContractCreate(FarmerContractBase):
+    pass
+
+class FarmerContractUpdate(FarmerContractBase):
+    pass
 
 # ====================== FARMER SCHEMAS ======================
 class FarmerBase(BaseModel):
@@ -82,7 +86,6 @@ class FarmerUpdate(BaseModel):
 class FarmerRead(FarmerBase):
     id: uuid.UUID
     address_id: Optional[uuid.UUID] = None
-    assigned_agent_id: Optional[uuid.UUID] = None
     registration_date: datetime
     is_active: bool
     address: Optional[AddressRead] = None

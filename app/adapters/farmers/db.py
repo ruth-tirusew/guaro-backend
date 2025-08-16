@@ -1,12 +1,11 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from fastapi import HTTPException, status
 import uuid
 from typing import List, Optional
 from datetime import datetime
 
 from app.adapters.farmers.interface import IFarmerRepository
-from app.adapters.farmers.models import Farmer, Address, LegalDocument, Gender, VerificationStatus
+from app.adapters.farmers.models import Farmer, Address, LegalDocument, Gender, VerificationStatus, FarmerContracts
 
 class FarmerRepository(IFarmerRepository):
     def __init__(self, db_session: Session):
@@ -22,10 +21,7 @@ class FarmerRepository(IFarmerRepository):
             return farmer
         except IntegrityError:
             self.db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, 
-                detail="Farmer creation failed - duplicate phone number or address"
-            )
+            raise ValueError("Farmer creation failed - duplicate phone number or address")
 
     def get_farmer_by_id(self, farmer_id: str) -> Optional[Farmer]:
         return self.db.query(Farmer).filter(Farmer.id == farmer_id).first()
@@ -35,11 +31,7 @@ class FarmerRepository(IFarmerRepository):
 
     def get_all_farmers(self) -> List[Farmer]:
         return self.db.query(Farmer).all()
-
-    def get_farmers_by_agent(self, agent_id: str) -> List[Farmer]:
-        agent_uuid = uuid.UUID(agent_id)
-        return self.db.query(Farmer).filter(Farmer.assigned_agent_id == agent_uuid).all()
-
+        
     def update_farmer(self, farmer_id: str, update_data: dict) -> Optional[Farmer]:
         farmer = self.get_farmer_by_id(farmer_id)
         if not farmer:
@@ -54,11 +46,16 @@ class FarmerRepository(IFarmerRepository):
             return farmer
         except IntegrityError:
             self.db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, 
-                detail="Farmer update failed - duplicate phone number or address"
-            )
-    
+            raise ValueError("Farmer update failed - duplicate phone number or address")
+
+    def add_farmer_contract(self, contract_data: dict):
+        contract = FarmerContracts(**contract_data)
+        self.db.add(contract)
+        self.db.commit()
+        self.db.refresh(contract)
+        return contract
+        
+
     def activate_farmer(self, farmer_id: str) -> bool:
         farmer = self.get_farmer_by_id(farmer_id)
         if farmer:
@@ -94,10 +91,7 @@ class FarmerRepository(IFarmerRepository):
             return address
         except IntegrityError:
             self.db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, 
-                detail="Address creation failed"
-            )
+            raise ValueError("Address creation failed")
 
     def get_address_by_id(self, address_id: str) -> Optional[Address]:
         return self.db.query(Address).filter(Address.id == address_id).first()
@@ -123,10 +117,7 @@ class FarmerRepository(IFarmerRepository):
             return address
         except IntegrityError:
             self.db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, 
-                detail="Address update failed"
-            )
+            raise ValueError("Address update failed")
 
     def delete_address(self, address_id: str) -> bool:
         address = self.get_address_by_id(address_id)
@@ -146,10 +137,7 @@ class FarmerRepository(IFarmerRepository):
             return document
         except IntegrityError:
             self.db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, 
-                detail="Legal document creation failed"
-            )
+            raise ValueError("Legal document creation failed")
 
     def get_legal_document_by_id(self, document_id: str) -> Optional[LegalDocument]:
         uuid_obj = uuid.UUID(document_id)
@@ -179,10 +167,8 @@ class FarmerRepository(IFarmerRepository):
             return document
         except IntegrityError:
             self.db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, 
-                detail="Legal document update failed"
-            )
+            raise ValueError("Legal document update failed")
+
 
     def delete_legal_document(self, document_id: str) -> bool:
         document = self.get_legal_document_by_id(document_id)
@@ -193,21 +179,6 @@ class FarmerRepository(IFarmerRepository):
         return False
 
     # ====================== RELATIONSHIP OPERATIONS ======================
-    def assign_farmer_to_agent(self, farmer_id: str, agent_id: str) -> bool:
-        farmer = self.get_farmer_by_id(farmer_id)
-        if farmer:
-            farmer.assigned_agent_id = uuid.UUID(agent_id)
-            self.db.commit()
-            return True
-        return False
-
-    def unassign_farmer_from_agent(self, farmer_id: str) -> bool:
-        farmer = self.get_farmer_by_id(farmer_id)
-        if farmer:
-            farmer.assigned_agent_id = None
-            self.db.commit()
-            return True
-        return False
 
     def get_farmer_with_relationships(self, farmer_id: str) -> Optional[Farmer]:
         uuid_obj = uuid.UUID(farmer_id)

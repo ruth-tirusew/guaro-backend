@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum as PyEnum
 from uuid import uuid4, UUID
-from sqlalchemy import Column, String, Integer, Numeric, DateTime, ForeignKey, Boolean
+from sqlalchemy import Column, String, Integer, Numeric, DateTime, ForeignKey, Boolean, Text
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import relationship
@@ -40,7 +40,7 @@ class Farmer(BaseModel):
     educational_background = Column(String(255), nullable=True)
     phone_number = Column(String(20), unique=True)
     address_id = Column(PG_UUID(as_uuid=True), ForeignKey("addresses.id"), unique=True)
-    registration_date = Column(DateTime, default=datetime.utcnow)
+    registration_date = Column(DateTime, default=datetime.now(timezone.utc))
     is_active = Column(Boolean, default=True)
     
     address = relationship("Address", back_populates="farmer")
@@ -49,6 +49,14 @@ class Farmer(BaseModel):
     initial_biodata = relationship("InitialBiodata", back_populates="farmer",
                                  cascade="all, delete-orphan")
    
+
+class FarmerContracts(BaseModel):
+    __tablename__="farmer_contracts"
+    
+    farmer_id = Column(PG_UUID(as_uuid=True), ForeignKey("farmers.id"))
+    contract_name = Column(String(100), nullable=False)
+    document_url = Column(String(100), nullable=False)
+
 
 
 
