@@ -28,7 +28,7 @@ class UserModel(BaseModel):
     
     user_warehouse = relationship('UserWarehouse', back_populates='user', cascade='all, delete-orphan', )
     warehouses = relationship('Warehouse', secondary='user_warehouse', back_populates='agents', overlaps="user_warehouse")
-
+    
 class UserProvider(BaseModel):
     __tablename__ = 'user_providers'
 

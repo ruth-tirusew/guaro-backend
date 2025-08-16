@@ -9,11 +9,15 @@ class IUserRepository(ABC):
         pass
 
     @abstractmethod
-    def create_user_proviider(user_id: str, provider_id: str) -> UserProvider:
+    def create_user_proviider(self, user_id: str, provider_id: str) -> UserProvider:
         pass
 
     @abstractmethod
     def get_user_by_id(self, user_id: str) -> Optional[UserModel]:
+        pass
+    
+    @abstractmethod
+    def get_user_by_provider_id(self, provider_id: str):
         pass
 
     @abstractmethod
