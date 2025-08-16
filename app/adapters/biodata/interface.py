@@ -48,3 +48,16 @@ class IBiodataRepository(ABC):
     @abstractmethod
     def delete_initial_biodata(self, biodata_id: UUID) -> bool:
         pass
+
+
+    @abstractmethod
+    def update_price(self, crop_id: UUID, new_price: float) -> Crop:
+        pass
+
+    @abstractmethod
+    def receive(self, crop_id: UUID, amount: float, warehouse_id: UUID, farmer_id: UUID, notes: Optional[str] = None) -> Crop:
+        pass
+
+    @abstractmethod
+    def deplete(self, crop_id: UUID, amount: float, warehouse_id: UUID, notes: Optional[str] = None) -> Crop:
+        pass    
