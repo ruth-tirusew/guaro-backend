@@ -34,7 +34,7 @@ def handle_auth_exceptions(func):
                 case errors.UserCreationError:
                     raise HTTPException(
                             status_code=status.HTTP_409_CONFLICT,
-                            detail=str(e.errorMessage)
+                            detail=str(e)
                         ) from e
                    
                 case errors.UserUpdateError:
