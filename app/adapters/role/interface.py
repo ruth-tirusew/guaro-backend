@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional, List
+from uuid import UUID
+
 from app.adapters.role.models import RoleDBSchema, RoleCreate
 
 class IRoleRepository(ABC):
@@ -9,6 +11,10 @@ class IRoleRepository(ABC):
 
     @abstractmethod
     def get_role_by_id(self, role_id: str) -> Optional[RoleDBSchema]:
+        pass
+
+    @abstractmethod
+    def get_role_by_user_id(self, user_id:str) -> Optional[RoleDBSchema]:
         pass
 
     @abstractmethod
@@ -32,10 +38,18 @@ class IRoleRepository(ABC):
         pass
 
     @abstractmethod
-    def unassign_role_to_resource(self, resource_id: str, role_id: str):
+    def unassign_role_from_resource(self, resource_id: str, role_id: str):
         pass
 
     @abstractmethod
-    def get_assigned_resources(self,role_id:str):
+    def get_assigned_resources(self,role_id:UUID):
         pass
-    
+
+    @abstractmethod
+    def assign_user_role(self, user_id: UUID, role_id:UUID):
+        pass
+
+    @abstractmethod
+    def unassign_user_role(self, user_id: UUID, role_id:UUID):
+        pass
+

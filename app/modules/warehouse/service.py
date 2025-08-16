@@ -42,12 +42,12 @@ class WarehouseService:
         user = self.user_service.get_user(agent_id)
         if not user:
             raise NotFoundError
-        response = self.repository.assign_agent(warehouse_id=warehouse_id, agent_id=agent_id)
+        self.repository.assign_agent(warehouse_id=warehouse_id, agent_id=agent_id)
     
     def unassign_agent(self, agent_id: str, warehouse_id:str):
         if not user:
             raise NotFoundError
-        response = self.repository.unassign_agent(warehouse_id=warehouse_id, agent_id=agent_id)
+        self.repository.unassign_agent(warehouse_id=warehouse_id, agent_id=agent_id)
 
     def get_assigned_agent(self, warehouse_id: str):
         warehouse = self.repository.get_warehouse_by_id(warehouse_id=warehouse_id)

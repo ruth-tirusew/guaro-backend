@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status
 from typing import List, Optional
+from uuid import UUID
 
 from app.adapters.role.interface import IRoleRepository
 from app.modules.resources.service import ResourceService
@@ -28,6 +29,10 @@ class RoleService:
         
         return self.repository.create_role(role_data)
 
+    def get_role_by_user_id(self, user_id: UUID) -> RoleRead:
+        role = self.repository.get_role_by_user_id(user_id)
+        return role
+
     def get_role_by_id(self, role_id: str) -> RoleRead:
         role = self.repository.get_role_by_id(role_id)
         if not role:
@@ -39,7 +44,7 @@ class RoleService:
         if not role:
             raise NotFoundError
     
-        resource = self.resource_service.get_resource_by_id(resource_id)
+        resource = self.resource_service.get_resource(resource_id)
         if not resource:
             raise NotFoundError
     
@@ -56,7 +61,7 @@ class RoleService:
         if not role:
             raise NotFoundError
     
-        resource = self.resource_service.get_resource_by_id(resource_id)
+        resource = self.resource_service.get_resource(resource_id)
         if not resource:
             raise NotFoundError
     
@@ -67,6 +72,16 @@ class RoleService:
             )
         
         self.repository.unassign_role_to_resource(resource_id=resource_id, role_id=role_id)
+    
+    def assign_role_to_user(self, user_id: UUID, role_id: UUID):
+        self.repository.assign_user_role(user_id=user_id, role_id=role_id)
+
+    def get_assigned_resources(self,role_id):
+        print("Role ID_____________________")
+        print(role_id)
+        assigned_resources = self.repository.get_assigned_resources(role_id)
+        print(assigned_resources)
+        return assigned_resources
         
     def _role_name_exists(self, name: str) -> bool:
         return self.repository.get_role_by_name(name) is not None
