@@ -283,7 +283,7 @@ class ProductRepository(IProductRepository):
                 batch = self.get_batch(transaction_data['batch_id'])
                 if batch:
                     batch.available_quantity = quantity_after
-                    batch.quantity = batch.available_quantity + batch.reserved_quantity
+                    batch.quantity = batch.available_quantity + float(batch.reserved_quantity)
             
             self.db.commit()
             self.db.refresh(db_transaction)
@@ -291,6 +291,10 @@ class ProductRepository(IProductRepository):
         except IntegrityError as e:
             self.db.rollback()
             raise ValueError(str(e))
+
+        except Exception as e:
+            self.db.rollback()
+            raise e
 
     def receive(self, product_id: UUID, amount: float, warehouse_id: UUID, batch_id: Optional[UUID] = None, 
                 created_by: UUID = None, transaction_reference: str = None, notes: str = None) -> Product:
@@ -389,7 +393,7 @@ class ProductRepository(IProductRepository):
         ).all()
     
 
-    def add_product_crop(self, product_id: UUID, crop_id: UUID, quantity_ratio: float = 1.0, is_primary: bool = False) -> ProductCrop:
+    def add_product_crop(self, product_id: UUID, crop_id: UUID, quantity_ratio: float = 1.0) -> ProductCrop:
         """Add a crop as raw material to a product"""
         try:
             existing = self.db.query(ProductCrop).filter_by(
