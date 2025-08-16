@@ -15,6 +15,10 @@ class IUserRepository(ABC):
     @abstractmethod
     def get_user_by_id(self, user_id: str) -> Optional[UserModel]:
         pass
+
+    @abstractmethod
+    def get_user_providers(self, user_id)->List[UserProvider]:
+        pass
     
     @abstractmethod
     def get_user_by_provider_id(self, provider_id: str):

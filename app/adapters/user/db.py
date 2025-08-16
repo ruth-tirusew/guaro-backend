@@ -1,10 +1,11 @@
-from app.adapters.user.interface import IUserRepository
-from app.adapters.user.models import UserModel, UserDBSchema, UserProvider
-
+import uuid
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from fastapi import HTTPException, status
-import uuid
+from typing import List
+
+from app.adapters.user.interface import IUserRepository
+from app.adapters.user.models import UserModel, UserDBSchema, UserProvider
 
 class UserRepository(IUserRepository):
     def __init__(self, db_session: Session):
@@ -37,6 +38,9 @@ class UserRepository(IUserRepository):
 
     def get_user_by_id(self, user_id: uuid.UUID) -> UserModel | None:
         return self.db.query(UserModel).filter(UserModel.id == user_id).first()
+
+    def get_user_providers(self, user_id)->List[UserProvider]:
+        return self.db.query(UserProvider).filter(UserProvider.user_id==user_id).all()
 
     def get_user_by_provider_id(self, provider_id: str):
         print(provider_id)

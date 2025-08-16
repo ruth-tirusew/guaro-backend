@@ -35,6 +35,9 @@ class AuthenticationService:
 
     def update_user(self, user: UpdateUserModel) -> UserInfo:
         return self.adapter.update_user(user)
+
+    def delete_user(self, user_id: str)->None:
+        return self.adapter.delete_user(user_id=user_id)
         
     def get_user(self, user_id: str) -> UserInfo:
         return self.adapter.get_user(user_id)
