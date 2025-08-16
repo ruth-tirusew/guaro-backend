@@ -6,6 +6,7 @@ from app.modules.products.schemas import (
     ProductDetail, ProductCategoryRequest, ProductSearchRequest, CategorySearchRequest
 )
 from app.dependencies import ProductServiceDep
+from app.utils.middlewares.authorization import require_auth, require_permission, require_role
 from app.modules.products.service import ProductService
 
 router = APIRouter(prefix="/product", tags=["Products"])
@@ -48,9 +49,14 @@ def update_product(product: ProductUpdate, product_service: ProductServiceDep):
     return product_service.update_product(product)
 
 @router.put("/receive", response_model=Product)
-def receive_product(product: GRNRequest, product_service: ProductServiceDep):
+def receive_product(
+    product: GRNRequest, 
+    product_service: ProductServiceDep,
+    user_info: dict = Depends(require_auth())
+):
     """Receive product stock (increase inventory)"""
-    return product_service.receive_product(product)
+
+    return product_service.receive_product(product,user_info.id)
 
 @router.put("/deplete", response_model=Product)
 def deplete_product(product: GRNRequest, product_service: ProductServiceDep):

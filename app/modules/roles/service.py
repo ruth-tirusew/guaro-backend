@@ -82,6 +82,9 @@ class RoleService:
         assigned_resources = self.repository.get_assigned_resources(role_id)
         print(assigned_resources)
         return assigned_resources
+
+    def unassign_role_from_user(self, user_id: UUID, role_id: UUID):
+        self.repository.unassign_user_role(user_id=user_id, role_id=role_id)
         
     def _role_name_exists(self, name: str) -> bool:
         return self.repository.get_role_by_name(name) is not None

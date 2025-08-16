@@ -18,8 +18,8 @@ async def create_resource(
     resource_service:ResourceServiceDep,
     resource: ResourceCreate,
     request: Request,
-    # user_info: dict = Depends(require_auth()),
-    # _: None = Depends(require_resource_management()),
+    user_info: dict = Depends(require_auth()),
+    _: None = Depends(require_resource_management()),
 ):
     try:
         return resource_service.create_resource(resource)

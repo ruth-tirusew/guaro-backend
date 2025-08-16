@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 
 from app.modules.authentication.service import AuthenticationService
+from app.modules.authentication.helpers import handle_auth_exceptions
 from app.modules.roles.service import RoleService
 from app.adapters.user.interface import IUserRepository
 from app.adapters.user.models import UserDBSchema
@@ -22,6 +23,7 @@ class UserService:
         self.repository = user_repository
         self.role_service = role_service
 
+    @handle_auth_exceptions
     def create_user(self, user_data: UserCreate) -> UserRead:
         """Create a new user with validation and authentication service integration"""
         try:
@@ -30,6 +32,7 @@ class UserService:
                 existing_by_phone = self.repository.get_user_by_phone(user_data.phone)
                 if existing_by_phone:
                     raise ErrorFactory.conflict(
+                        resource="User",
                         user_message="A user with this phone number already exists.",
                         context={"phone": user_data.phone}
                     )
@@ -39,6 +42,7 @@ class UserService:
                 existing_by_email = self.repository.get_user_by_email(user_data.email)
                 if existing_by_email:
                     raise ErrorFactory.conflict(
+                        resource="User",
                         user_message="A user with this email already exists.",
                         context={"email": user_data.email}
                     )
@@ -116,7 +120,7 @@ class UserService:
                 context={"email": email}
             )
 
-    def list_users(self, limit: Optional[int] = None, offset: Optional[int] = None) -> UserList:
+    def list_users(self) -> UserList:
         """List all users with optional pagination"""
         try:
             users = self.repository.get_all_users()
@@ -129,7 +133,7 @@ class UserService:
                 user_message="Failed to retrieve users list"
             )
 
-    def update_user(self, user_id: str, update_data: UserUpdate) -> Optional[UserRead]:
+    def update_user(self, user_id: str, update_data: UserUpdate) -> UserRead:
         """Update user information with validation"""
         try:
             # Validate email uniqueness if email is being updated
@@ -137,6 +141,7 @@ class UserService:
                 existing_user = self.repository.get_user_by_email(update_data.email)
                 if existing_user and str(existing_user.id) != user_id:
                     raise ErrorFactory.conflict(
+                        resource="User",
                         user_message="A user with this email already exists.",
                         context={"email": update_data.email, "existing_user_id": str(existing_user.id)}
                     )
@@ -146,6 +151,7 @@ class UserService:
                 existing_user = self.repository.get_user_by_phone(update_data.phone)
                 if existing_user and str(existing_user.id) != user_id:
                     raise ErrorFactory.conflict(
+                        resource="User",
                         user_message="A user with this phone number already exists.",
                         context={"phone": update_data.phone, "existing_user_id": str(existing_user.id)}
                     )
@@ -171,6 +177,7 @@ class UserService:
         """Delete user and clean up related data"""
         try:
             user = self.repository.get_user_by_id(user_id)
+            user_providers = self.repository.get_user_providers(user_id)
             if not user:
                 raise ErrorFactory.not_found(
                     user_message="User not found",
@@ -185,9 +192,8 @@ class UserService:
 
 
             self.repository.delete_user(user_id)
-            
-            # TODO: Consider deleting from authentication service as well
-            # self.authentication_service.delete_user(provider_id)
+            for user_provider in user_providers:                                                                                                                                                                                                                                                                         
+                self.authentication_service.delete_user(user_provider.provider_id)
             
             logger.info(f"User deleted successfully: {user_id}")
             return True

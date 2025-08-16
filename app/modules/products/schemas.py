@@ -5,7 +5,7 @@ from typing import List, Optional, Any
 
 # Base Models
 class ProductBase(BaseModel):
-    image_url: HttpUrl
+    image_url: Optional[HttpUrl]=None
     name: str
     sku: Optional[str]
     description: Optional[str] = None
@@ -92,7 +92,13 @@ class GRNRequest(BaseModel):
     warehouse_id: uuid.UUID
     product_id: uuid.UUID
     amount: float
-    batch_info: Optional[BatchInfo] = None
+    cost_price: Optional[float]=None
+    selling_price: Optional[float]=None
+    warehouse_id: Optional[uuid.UUID]=None
+    expiry_date: Optional[Any] = None
+    manufacture_date: Optional[Any] = None
+    notes: Optional[str] = None
+
 
 class ProductCategoryLink(BaseModel):
     product_id: uuid.UUID

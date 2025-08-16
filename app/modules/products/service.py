@@ -424,7 +424,7 @@ class ProductService:
         categories = self.repository.get_categories_by_product(product_id)
         return CategoryList(categories=[Category.from_orm(c) for c in categories])
 
-    def update_product_crop_ratio(self, product_id: UUID, crop_id: UUID, quantity_ratio: float, is_primary: bool = False) -> None:
+    def update_product_crop_ratio(self, product_id: UUID, crop_id: UUID, quantity_ratio: float) -> None:
         """Update the quantity ratio for a product-crop relationship"""
         self.get_product_by_id(product_id)
         crop = self.crop_service.get_crop_by_id(crop_id)
