@@ -20,14 +20,18 @@ class Warehouse(BaseModel):
     user_warehouse = relationship('UserWarehouse', back_populates='warehouse', cascade='all, delete-orphan')
     agents = relationship('UserModel', secondary='user_warehouse', back_populates='warehouses', overlaps="user_warehouse")
     
-    product_warehouse = relationship('ProductWarehouse', back_populates='warehouse', cascade='all, delete-orphan')
-    products = relationship('Product', secondary='product_warehouse', back_populates='warehouses', overlaps="product,warehouse, product_warehouse") #Needs to be tested again
-    
+    amount_transactions = relationship("ProductAmountLedger", back_populates="warehouse")
+
     crop_warehouse = relationship('CropWarehouse', back_populates='warehouse', cascade='all, delete-orphan')
     crops = relationship('Crop', secondary='crop_warehouse', back_populates='warehouses', overlaps="crop_warehouse")
     
-    goods_receiving = relationship("ProductAmountLedger", back_populates="warehouse", cascade="all, delete-orphan")
-    
+    amount_transactions = relationship("ProductAmountLedger", back_populates="warehouse", cascade="all, delete-orphan")
+    goods_receiving = relationship(
+        "GoodsReceiving", 
+        back_populates="warehouse", 
+        cascade="all, delete-orphan",
+        foreign_keys="[GoodsReceiving.warehouse_id]"
+    )
 
 
 
