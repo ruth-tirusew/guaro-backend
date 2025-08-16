@@ -10,6 +10,8 @@ from app.modules.biodata.schemas import (
     GRNRequest
 )
 from app.dependencies import BiodataServiceDep
+from app.utils.middlewares.authorization import require_auth, require_permission
+
 
 router = APIRouter(prefix="", tags=["Biodata"])
 
@@ -18,7 +20,11 @@ def get_raw_material_by_id(id: UUID, biodata_service:BiodataServiceDep):
     return biodata_service.get_crop_by_id(id)
 
 @router.get("/raw-material", response_model=CropList)
-def get_all_raw_materials(biodata_service:BiodataServiceDep):
+def get_all_raw_materials(
+    biodata_service:BiodataServiceDep,
+    user_info: dict = Depends(require_auth()),
+    _=Depends(require_permission("crop", "read"))
+):
     return biodata_service.get_all_crops()
 
 @router.post("/raw-material/create", response_model=CropRead)
