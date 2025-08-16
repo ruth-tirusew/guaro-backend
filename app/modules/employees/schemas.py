@@ -1,7 +1,7 @@
 import re
 import uuid
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, field_validator, model_validator, ValidationInfo
+from pydantic import BaseModel, EmailStr, field_validator, model_validator, ValidationInfo, HttpUrl
 from typing import List, Optional
 from enum import Enum
 
@@ -137,7 +137,7 @@ class EmployeeList(BaseModel):
 class EmployeeDocumentBase(BaseModel):
     document_type: str
     document_title: str
-    document_url: Optional[str] = None
+    document_url: Optional[HttpUrl] = None
     file_path: Optional[str] = None
     issue_date: Optional[datetime] = None
     expiry_date: Optional[datetime] = None
@@ -159,7 +159,7 @@ class EmployeeDocumentCreate(EmployeeDocumentBase):
 class EmployeeDocumentUpdate(BaseModel):
     document_type: Optional[str] = None
     document_title: Optional[str] = None
-    document_url: Optional[str] = None
+    document_url: Optional[HttpUrl] = None
     file_path: Optional[str] = None
     issue_date: Optional[datetime] = None
     expiry_date: Optional[datetime] = None

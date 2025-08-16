@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum as PyEnum
-from pydantic import BaseModel as PydanticBaseModel
+from pydantic import BaseModel as PydanticBaseModel, HttpUrl
 from typing import Optional
 from uuid import UUID
 
@@ -20,7 +20,7 @@ class EmployeeType(str, PyEnum):
 
 class EmployeeProfileDBSchema(PydanticBaseModel):
     id: Optional[str] = None
-    image_url: Optional[str] = None
+    image_url: Optional[HttpUrl] = None
     employee_id: str
     first_name: str
     last_name: str
@@ -58,7 +58,7 @@ class EmployeeDocumentDBSchema(PydanticBaseModel):
     employee_id: str
     document_type: str
     document_title: str
-    document_url: Optional[str] = None
+    document_url: Optional[HttpUrl] = None
     file_path: Optional[str] = None
     issue_date: Optional[datetime] = None
     expiry_date: Optional[datetime] = None
