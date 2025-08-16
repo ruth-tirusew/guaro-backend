@@ -32,17 +32,11 @@ def handle_auth_exceptions(func):
                     ) from e
                 
                 case errors.UserCreationError:
-                    if "already exists" in str(e):
-                        raise HTTPException(
+                    raise HTTPException(
                             status_code=status.HTTP_409_CONFLICT,
-                            detail=str(e)
+                            detail=str(e.errorMessage)
                         ) from e
-                    else:
-                        raise HTTPException(
-                            status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="Failed to create user"
-                        ) from e
-                
+                   
                 case errors.UserUpdateError:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
