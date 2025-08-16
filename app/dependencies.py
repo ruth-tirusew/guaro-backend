@@ -43,63 +43,111 @@ def get_auth_service(
     """Get authentication service (singleton)"""
     return AuthenticationService(adapter)
 
-def get_user_service(
-    db: Session = Depends(get_db),
-    auth_service: AuthenticationService = Depends(get_auth_service),
-) -> UserService:
-    return UserService(
-        authentication_service=auth_service, 
-        user_repository=UserRepository(db)
-    )
+def get_user_repository(db: Session = Depends(get_db)) -> UserRepository:
+    """Get user repository with database session"""
+    return UserRepository(db)
 
-def get_farmer_service(db: Session = Depends(get_db)) -> FarmerService:
-    return FarmerService(farmer_repository=FarmerRepository(db))
+def get_farmer_repository(db: Session = Depends(get_db)) -> FarmerRepository:
+    """Get farmer repository with database session"""
+    return FarmerRepository(db)
 
-def get_biodata_service(
-    db: Session = Depends(get_db),
-    farmer_service: FarmerService = Depends(get_farmer_service),
-) -> BiodataService:
-    return BiodataService(
-        farmer_service=farmer_service, 
-        biodata_repository=BiodataRepository(db)
-    )
+def get_biodata_repository(db: Session = Depends(get_db)) -> BiodataRepository:
+    """Get biodata repository with database session"""
+    return BiodataRepository(db)
 
-def get_resource_service(db: Session = Depends(get_db)) -> ResourceService:
-    return ResourceService(resource_repository=ResourceRepository(db))
+def get_resource_repository(db: Session = Depends(get_db)) -> ResourceRepository:
+    """Get resource repository with database session"""
+    return ResourceRepository(db)
+
+def get_role_repository(db: Session = Depends(get_db)) -> RoleRepository:
+    """Get role repository with database session"""
+    return RoleRepository(db)
+
+def get_warehouse_repository(db: Session = Depends(get_db)) -> WarehouseRepository:
+    """Get warehouse repository with database session"""
+    return WarehouseRepository(db)
+
+def get_product_repository(db: Session = Depends(get_db)) -> ProductRepository:
+    """Get product repository with database session"""
+    return ProductRepository(db)
+
+def get_employee_repository(db: Session = Depends(get_db)) -> EmployeeRepository:
+    """Get employee repository with database session"""
+    return EmployeeRepository(db)
+
+# Service Layer Dependencies (Request-scoped)
+def get_resource_service(
+    resource_repository: ResourceRepository = Depends(get_resource_repository)
+) -> ResourceService:
+    """Get resource service with dependencies"""
+    return ResourceService(resource_repository=resource_repository)
 
 def get_role_service(
-    db: Session = Depends(get_db),
+    role_repository: RoleRepository = Depends(get_role_repository),
     resource_service: ResourceService = Depends(get_resource_service),
 ) -> RoleService:
+    """Get role service with dependencies"""
     return RoleService(
-        role_repository=RoleRepository(db), 
+        role_repository=role_repository, 
         resource_service=resource_service
     )
 
+def get_user_service(
+    auth_service: AuthenticationService = Depends(get_auth_service),
+    user_repository: UserRepository = Depends(get_user_repository),
+    role_service: RoleService = Depends(get_role_service)
+) -> UserService:
+    """Get user service with dependencies"""
+    return UserService(
+        authentication_service=auth_service, 
+        user_repository=user_repository,
+        role_service=role_service
+    )
+
+def get_farmer_service(
+    farmer_repository: FarmerRepository = Depends(get_farmer_repository)
+) -> FarmerService:
+    """Get farmer service with dependencies"""
+    return FarmerService(farmer_repository=farmer_repository)
+
+def get_biodata_service(
+    farmer_service: FarmerService = Depends(get_farmer_service),
+    biodata_repository: BiodataRepository = Depends(get_biodata_repository),
+) -> BiodataService:
+    """Get biodata service with dependencies"""
+    return BiodataService(
+        farmer_service=farmer_service, 
+        biodata_repository=biodata_repository
+    )
+
+
 def get_warehouse_service(
-    db: Session = Depends(get_db),
     user_service: UserService = Depends(get_user_service),
+    warehouse_repository: WarehouseRepository = Depends(get_warehouse_repository),
 ) -> WarehouseService:
+    """Get warehouse service with dependencies"""
     return WarehouseService(
         user_service=user_service, 
-        warehouse_repository=WarehouseRepository(db)
+        warehouse_repository=warehouse_repository
     )
 
 def get_product_service(
-    db: Session = Depends(get_db),
     biodata_service: BiodataService = Depends(get_biodata_service),
     warehouse_service: WarehouseService = Depends(get_warehouse_service),
+    product_repository: ProductRepository = Depends(get_product_repository),
 ) -> ProductService:
+    """Get product service with dependencies"""
     return ProductService(
-        product_repository=ProductRepository(db), 
+        product_repository=product_repository, 
         crop_service=biodata_service, 
         warehouse_service=warehouse_service
     )
 
-def get_employee_service(db: Session = Depends(get_db)) -> EmployeeService:
-    """Create EmployeeService with database session"""
-    return EmployeeService(employee_repository=EmployeeRepository(db))
-
+def get_employee_service(
+    employee_repository: EmployeeRepository = Depends(get_employee_repository)
+) -> EmployeeService:
+    """Get employee service with dependencies"""
+    return EmployeeService(employee_repository=employee_repository)
 
 AuthServiceDep = Annotated[AuthenticationService, Depends(get_auth_service)]
 UserServiceDep = Annotated[UserService, Depends(get_user_service)]
