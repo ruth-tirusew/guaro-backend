@@ -20,6 +20,8 @@ class TaxBase(BaseModel):
     tax_percentage: Decimal = Field(default=Decimal('0.0'), ge=0, le=100, description="Tax percentage")
     description: Optional[str] = Field(None, description="Tax description")
 
+    model_config = {"from_attributes": True}
+
 class ProductTaxBase(BaseModel):
     product_id: UUID = Field(..., description="Product ID")
     tax_id: UUID = Field(..., description="Tax ID")
@@ -41,7 +43,3 @@ class ProductTaxCreate(ProductTaxBase):
 
 class TaxList(BaseModel):
     items: List[Tax]
-    total: int
-    page: int
-    size: int
-    pages: int
