@@ -333,12 +333,13 @@ class OrderRepository(IOrderRepository):
     ) -> List[Order]:
         """Get orders within a date range"""
         try:
-            return self.db.query(Order).filter(
+            orders = self.db.query(Order).filter(
                 and_(
-                    Order.order_date >= start_date,
-                    Order.order_date <= end_date
+                    Order.created_at >= start_date,
+                    Order.created_at <= end_date
                 )
-            ).order_by(desc(Order.order_date)).all()
+            ).order_by(desc(Order.created_at)).all()
+            return orders
         except Exception as e:
             logger.error(f"Error getting orders by date range: {str(e)}")
             raise
@@ -508,66 +509,3 @@ class OrderRepository(IOrderRepository):
             self.db.rollback()
             logger.error(f"Error bulk updating order status: {str(e)}")
             raise
-
-    def export_orders(
-        self,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
-        format: str = "csv"
-    ) -> bytes:
-        """Export orders data"""
-        try:
-            query = self.db.query(Order).options(
-                joinedload(Order.customer),
-                joinedload(Order.order_items)
-            )
-            
-            if start_date:
-                query = query.filter(Order.order_date >= start_date)
-            if end_date:
-                query = query.filter(Order.order_date <= end_date)
-            
-            orders = query.all()
-            
-            if format.lower() == "csv":
-                return self._export_to_csv(orders)
-            else:
-                raise ValueError(f"Unsupported export format: {format}")
-        except Exception as e:
-            logger.error(f"Error exporting orders: {str(e)}")
-            raise
-
-    def _export_to_csv(self, orders: List[Order]) -> bytes:
-        """Export orders to CSV format"""
-        output = io.StringIO()
-        writer = csv.writer(output)
-        
-        writer.writerow([
-            'Order ID', 'Order Number', 'Customer Name', 'Customer Phone',
-            'Order Date', 'Status', 'Subtotal', 'Discount', 'Adjustment',
-            'Tax Amount', 'Total Amount', 'Items Count'
-        ])
-        
-        for order in orders:
-            customer_name = ''
-            customer_phone = ''
-            if order.customer:
-                customer_name = order.customer.full_name
-                customer_phone = order.customer.phone
-            
-            writer.writerow([
-                str(order.id),
-                order.order_number,
-                customer_name,
-                customer_phone,
-                order.order_date.isoformat() if order.order_date else '',
-                order.status.value if order.status else '',
-                str(order.subtotal or 0),
-                str(order.discount or 0),
-                str(order.adjustment or 0),
-                str(order.tax_amount or 0),
-                str(order.total_amount or 0),
-                len(order.order_items)
-            ])
-        
-        return output.getvalue().encode('utf-8')

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional, List
 from uuid import UUID
-from app.adapters.product.models import Product, Category
+from app.adapters.product.models import Product, Category, ProductBatch
 
 class IProductRepository(ABC):
     @abstractmethod
@@ -54,6 +54,10 @@ class IProductRepository(ABC):
 
     @abstractmethod
     def deplete(self, product_id: UUID, amount: float, warehouse_id: UUID, batch_info: Optional[dict] = None) -> Product:
+        pass
+
+    @abstractmethod
+    def reserve(self, product_id: UUID, amount: float) -> ProductBatch:
         pass
     
     @abstractmethod

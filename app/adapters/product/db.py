@@ -9,7 +9,7 @@ from app.adapters.product.models import (
     ProductWarehouse, ProductCrop, Category, ProductCategory, TransactionType
 )
 from app.adapters.product.interface import IProductRepository
-from app.logging import logging
+from app.logging import logger
 
 class ProductRepository(IProductRepository):
     def __init__(self, db: Session):
@@ -35,7 +35,7 @@ class ProductRepository(IProductRepository):
             self.db.refresh(db_category) 
             return db_category
         except IntegrityError as e:
-            logging.error(f"Failed to create category {str(e)}")
+            logger.error(f"Failed to create category {str(e)}")
             self.db.rollback()
             raise ValueError(str(e))  
 
@@ -139,7 +139,7 @@ class ProductRepository(IProductRepository):
             self.db.refresh(db_product)
             return db_product
         except IntegrityError as e:
-            logging.error(f"Failed to create product {str(e)}")
+            logger.error(f"Failed to create product {str(e)}")
             self.db.rollback()
             raise ValueError(str(e))
 
@@ -210,7 +210,20 @@ class ProductRepository(IProductRepository):
         if reserved_qty is not None:
             db_batch.reserved_quantity = reserved_qty
         
-        db_batch.quantity = db_batch.available_quantity + db_batch.reserved_quantity
+        db_batch.quantity = db_batch.available_quantity - db_batch.reserved_quantity
+        
+        self.db.commit()
+        self.db.refresh(db_batch)
+        return db_batch
+
+    def reserve(self, product_id: UUID, amount: float) -> ProductBatch:
+        """Update batch quantities"""
+        db_batch = self.get_batch(product_id)
+        if not db_batch:
+            raise ValueError("Batch not found")
+
+        db_batch.quantity = db_batch.available_quantity - amount
+        db_batch.reserved_quantity = db_batch.reserved_quantity + amount
         
         self.db.commit()
         self.db.refresh(db_batch)

@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from decimal  import Decimal
 from sqlalchemy import (
     Column,
     String,
@@ -51,7 +52,7 @@ class Customer(BaseModel):
 class Orders(BaseModel):
     __tablename__ = 'orders'
     
-    customer_id = Column(PG_UUID(as_uuid=True), ForeignKey('customers.id', ondelete='CASCADE'), nullable=False)
+    customer_id = Column(PG_UUID(as_uuid=True), ForeignKey('customers.id', ondelete='CASCADE'), nullable=True)
     warehouse_id = Column(PG_UUID(as_uuid=True), ForeignKey('warehouses.id', ondelete='CASCADE'), nullable=False)
     
     order_number = Column(String(100), nullable=False, unique=True, index=True)
@@ -73,7 +74,6 @@ class Orders(BaseModel):
     
     # Relationships
     customer = relationship('Customer', back_populates='orders')
-    warehouse = relationship('Warehouse', back_populates='orders')
     order_items = relationship('OrderItems', back_populates='order', cascade='all, delete-orphan')
     
     creator = relationship("UserModel", foreign_keys=[created_by])
@@ -106,6 +106,25 @@ class Orders(BaseModel):
             .scalar_subquery()
         )
 
+    
+    @hybrid_property
+    def total_discount(self):
+        item_discounts = sum(
+            (item.discount_amount or Decimal('0.0')) for item in self.order_items
+        )
+        order_level_discount = self.discount or Decimal('0.0')
+        return item_discounts + order_level_discount
+
+    @total_discount.expression
+    def total_discount(cls):
+        return (
+            func.coalesce(
+                select(func.sum(OrderItems.discount_amount))
+                .where(OrderItems.order_id == cls.id)
+                .scalar_subquery(),
+                Decimal('0.0')
+            ) + func.coalesce(cls.discount, Decimal('0.0'))
+        )
 
 class OrderItems(BaseModel):
     __tablename__ = 'order_items'

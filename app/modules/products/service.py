@@ -220,6 +220,9 @@ class ProductService:
 
         updated_product = self.repository.get(request.product_id)
         return updated_product
+
+
+
         
     def deplete_product(self, request: GRNRequest, created_by: UUID, batch_id: Optional[UUID] = None) -> Product:
         """
@@ -230,19 +233,16 @@ class ProductService:
         if not product:
             raise ErrorFactory.not_found("Product")
         
-        # Validate warehouse exists
         warehouse = self.warehouse_service.get_warehouse_by_id(request.warehouse_id)
         if not warehouse:
             raise ErrorFactory.not_found("Warehouse")
 
-        # If no batch specified, use FIFO (First In, First Out)
         if not batch_id:
             available_batches = self.repository.get_batches_by_product(
                 product_id=request.product_id,
                 warehouse_id=request.warehouse_id
             )
             
-            # Filter batches with available quantity and sort by received date
             available_batches = [
                 batch for batch in available_batches 
                 if batch.available_quantity > 0
@@ -250,7 +250,7 @@ class ProductService:
             available_batches.sort(key=lambda x: x.received_date)
             
             if not available_batches:
-                raise ErrorFactory.business_rule_violation("No available stock for depletion")
+                raise ErrorFactory.bad_request("No available stock for depletion")
             
             batch_id = available_batches[0].id
 
@@ -260,7 +260,7 @@ class ProductService:
             raise ErrorFactory.not_found("Batch")
         
         if batch.available_quantity < request.amount:
-            raise ErrorFactory.business_rule_violation(
+            raise ErrorFactory.bad_request(
                 f"Insufficient stock. Available: {batch.available_quantity}, Requested: {request.amount}"
             )
 
@@ -279,6 +279,43 @@ class ProductService:
         )
 
         return Product.from_orm(updated_product)
+
+
+    def reserve_product(self, product_id: UUID, amount: float, created_by: UUID) -> Product:
+        """
+        Reserve product from inventory - reduces stock from specific batch or FIFO
+        """
+        # Validate product exists
+        product = self.get_product_by_id(product_id)
+        if not product:
+            raise ErrorFactory.not_found("Product")
+
+        available_batches = self.repository.get_batches_by_product(
+                product_id=product_id
+            )
+
+        print(available_batches)
+            
+        available_batches = [
+                batch for batch in available_batches 
+                if batch.available_quantity > 0
+            ]
+        available_batches.sort(key=lambda x: x.received_date)
+            
+        if not available_batches:
+            raise ErrorFactory.bad_request("Product out of stock")
+                    
+        if available_batches[0].available_quantity < amount:
+            raise ErrorFactory.bad_request(
+                f"Insufficient stock. Available: {available_batches[0].available_quantity}, Requested: {amount}"
+            )
+
+        updated_product = self.repository.reserve(
+            product_id=available_batches[0].id,
+            amount=amount
+        )
+
+        return updated_product
 
     def get_product_batches(self, product_id: UUID, warehouse_id: Optional[UUID] = None) -> list:
         """Get all batches for a product"""

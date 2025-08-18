@@ -3,7 +3,7 @@ from typing import Optional, List, Dict, Any
 from uuid import UUID
 from datetime import datetime
 from app.adapters.order.models import (
-    Order,
+    Orders,
     OrderItems,
     Customer,
     OrderStatus,
@@ -50,33 +50,33 @@ class IOrderRepository(ABC):
         pass
     
     @abstractmethod
-    def create_order(self, order_info: dict) -> Order:
-        """Create a new order"""
+    def create_order(self, order_info: dict) -> Orders:
+        """Create a new Orders"""
         pass
     
     @abstractmethod
-    def get_order_by_id(self, order_id: UUID) -> Optional[Order]:
-        """Get order by ID"""
+    def get_order_by_id(self, order_id: UUID) -> Optional[Orders]:
+        """Get Orders by ID"""
         pass
     
     @abstractmethod
-    def get_order_by_number(self, order_number: str) -> Optional[Order]:
-        """Get order by order number"""
+    def get_order_by_number(self, order_number: str) -> Optional[Orders]:
+        """Get Orders by Orders number"""
         pass
     
     @abstractmethod
-    def update_order(self, order_id: UUID, order_info: dict) -> Optional[Order]:
-        """Update order information"""
+    def update_order(self, order_id: UUID, order_info: dict) -> Optional[Orders]:
+        """Update Orders information"""
         pass
     
     @abstractmethod
-    def update_order_status(self, order_id: UUID, status: OrderStatus, notes: str) -> Optional[Order]:
-        """Update order status"""
+    def update_order_status(self, order_id: UUID, status: OrderStatus, notes: str) -> Optional[Orders]:
+        """Update Orders status"""
         pass
     
     @abstractmethod
     def delete_order(self, order_id: UUID) -> bool:
-        """Delete order"""
+        """Delete Orders"""
         pass
     
     @abstractmethod
@@ -89,17 +89,17 @@ class IOrderRepository(ABC):
         status: Optional[OrderStatus] = None,
         date_from: Optional[datetime] = None,
         date_to: Optional[datetime] = None
-    ) -> List[Order]:
+    ) -> List[Orders]:
         """List orders with filtering options"""
         pass
     
     @abstractmethod
-    def get_orders_by_customer(self, customer_id: UUID) -> List[Order]:
+    def get_orders_by_customer(self, customer_id: UUID) -> List[Orders]:
         """Get all orders for a specific customer"""
         pass
     
     @abstractmethod
-    def get_orders_by_warehouse(self, warehouse_id: UUID) -> List[Order]:
+    def get_orders_by_warehouse(self, warehouse_id: UUID) -> List[Orders]:
         """Get all orders for a specific warehouse"""
         pass
     
@@ -108,61 +108,51 @@ class IOrderRepository(ABC):
         self, 
         start_date: datetime, 
         end_date: datetime
-    ) -> List[Order]:
+    ) -> List[Orders]:
         """Get orders within a date range"""
         pass
     
-    # Order Items Operations
+    # Orders Items Operations
     @abstractmethod
     def add_order_item(self, order_item_info: dict) -> OrderItems:
-        """Add item to an order"""
+        """Add item to an Orders"""
         pass
     
     @abstractmethod
     def get_order_item_by_id(self, item_id: UUID) -> Optional[OrderItems]:
-        """Get order item by ID"""
+        """Get Orders item by ID"""
         pass
     
     @abstractmethod
     def update_order_item(self, item_id: UUID, item_info: dict) -> Optional[OrderItems]:
-        """Update order item"""
+        """Update Orders item"""
         pass
     
     @abstractmethod
     def delete_order_item(self, item_id: UUID) -> bool:
-        """Delete order item"""
+        """Delete Orders item"""
         pass
     
     @abstractmethod
     def get_order_items(self, order_id: UUID) -> List[OrderItems]:
-        """Get all items for a specific order"""
+        """Get all items for a specific Orders"""
         pass
     
     @abstractmethod
     def bulk_add_order_items(self, order_id: UUID, items_info: List[dict]) -> List[OrderItems]:
-        """Add multiple items to an order"""
+        """Add multiple items to an Orders"""
         pass
     
     @abstractmethod
     def bulk_update_order_items(self, items_info: List[dict]) -> List[OrderItems]:
-        """Update multiple order items"""
+        """Update multiple Orders items"""
         pass
     
     @abstractmethod
     def clear_order_items(self, order_id: UUID) -> bool:
-        """Remove all items from an order"""
+        """Remove all items from an Orders"""
         pass
-      
-    @abstractmethod
-    def begin_transaction(self):
-        """Begin database transaction"""
-        pass
-    
-    @abstractmethod
-    def commit_transaction(self):
-        """Commit database transaction"""
-        pass
-    
+          
     @abstractmethod
     def rollback_transaction(self):
         """Rollback database transaction"""
@@ -173,16 +163,6 @@ class IOrderRepository(ABC):
         self, 
         order_ids: List[UUID], 
         status: OrderStatus
-    ) -> List[Order]:
-        """Bulk update order status"""
-        pass
-    
-    @abstractmethod
-    def export_orders(
-        self,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
-        format: str = "csv"
-    ) -> bytes:
-        """Export orders data"""
+    ) -> List[Orders]:
+        """Bulk update Orders status"""
         pass
