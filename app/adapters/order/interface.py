@@ -70,7 +70,7 @@ class IOrderRepository(ABC):
         pass
     
     @abstractmethod
-    def update_order_status(self, order_id: UUID, status: OrderStatus) -> Optional[Order]:
+    def update_order_status(self, order_id: UUID, status: OrderStatus, notes: str) -> Optional[Order]:
         """Update order status"""
         pass
     

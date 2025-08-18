@@ -203,7 +203,7 @@ class OrderRepository(IOrderRepository):
             logger.error(f"Error updating order {order_id}: {str(e)}")
             raise
 
-    def update_order_status(self, order_id: UUID, status: OrderStatus) -> Optional[Order]:
+    def update_order_status(self, order_id: UUID, status: OrderStatus, notes: str) -> Optional[Order]:
         """Update order status"""
         try:
             order = self.get_order_by_id(order_id)
@@ -211,6 +211,7 @@ class OrderRepository(IOrderRepository):
                 return None
             
             order.status = status
+            order.notes = notes
             self.db.commit()
             self.db.refresh(order)
             logger.info(f"Order status updated: {order_id} -> {status}")
