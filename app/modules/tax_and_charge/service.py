@@ -23,7 +23,7 @@ class TaxService:
             created = self.repository.create_tax(tax_data.model_dump())
             print(created)
             return Tax.from_orm(created)
-            
+
         except ValueError as e:
             raise ErrorFactory.bad_request(
                 message=str(e)
@@ -97,37 +97,6 @@ class TaxService:
         taxes = self.repository.list_taxes(tax_type=tax_type)
         return [Tax.from_orm(tax) for tax in taxes]
 
-    def activate_tax(self, tax_id: UUID) -> Tax:
-        """Activate a tax"""
-        tax = self.repository.get_tax(tax_id)
-        if not tax:
-            raise ErrorFactory.not_found(
-                resource="Tax"
-            )
-        
-        try:
-            updated_tax = self.repository.update_tax(tax_id, {"is_active": True})
-            return Tax.from_orm(updated_tax)
-        except ValueError as e:
-            raise ErrorFactory.bad_request(
-                message=str(e)
-            )
-
-    def deactivate_tax(self, tax_id: UUID) -> Tax:
-        """Deactivate a tax"""
-        tax = self.repository.get_tax(tax_id)
-        if not tax:
-            raise ErrorFactory.not_found(
-                resource="Tax"
-            )
-        
-        try:
-            updated_tax = self.repository.update_tax(tax_id, {"is_active": False})
-            return Tax.model_validate(updated_tax)
-        except ValueError as e:
-            raise ErrorFactory.bad_request(
-                message=str(e)
-            )
     def _tax_name_exists(self, name: str) -> bool:
         """Check if a tax with the given name already exists"""
         taxes = self.repository.search_taxes(name)
