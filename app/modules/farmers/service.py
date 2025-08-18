@@ -4,6 +4,7 @@ from typing import List, Optional
 
 from app.adapters.farmers.interface import IFarmerRepository
 from app.core.exceptions import ErrorFactory
+from app.logging import logging
 from app.modules.farmers.schemas import (
     FarmerCreate, FarmerUpdate, FarmerRead, FarmerList,FarmerDetailResponse,
     AddressCreate, AddressUpdate, AddressRead, AddressList,
@@ -17,42 +18,46 @@ class FarmerService:
 
     # ====================== FARMER OPERATIONS ======================
     def create_farmer(self, farmer_data: FarmerCreate) -> FarmerRead:
-        """Create a farmer with address and legal documents"""
-        existing_farmer = self.repository.get_farmer_by_phone(farmer_data.phone_number)
-        if existing_farmer:
-            raise ValueError("A farmer with this phone number already exists")
+        try:
+            """Create a farmer with address and legal documents"""
+            existing_farmer = self.repository.get_farmer_by_phone(farmer_data.phone_number)
+            if existing_farmer:
+                raise ValueError("A farmer with this phone number already exists")
 
-        address_data = {
-            'zone_or_sub_city': farmer_data.address.zone_or_sub_city,
-            'kebele': farmer_data.address.kebele,
-            'woreda': farmer_data.address.woreda
-        }
-        address = self.repository.create_address(address_data)
+            address = self.repository.create_address(farmer_data.address.model_dump())
 
-        farmer_data_dict = {
-            'full_name': farmer_data.full_name,
-            'gender': farmer_data.gender,
-            'educational_background': farmer_data.educational_background,
-            'phone_number': farmer_data.phone_number,
-            'address_id': address.id,
-            'registration_date': datetime.now(timezone.utc),
-            'is_active': True
-        }
-        farmer = self.repository.create_farmer(farmer_data_dict)
+            farmer_data_dict = {
+                'full_name': farmer_data.full_name,
+                'gender': farmer_data.gender,
+                'educational_background': farmer_data.educational_background,
+                'phone_number': farmer_data.phone_number,
+                'address_id': address.id,
+                'registration_date': datetime.now(timezone.utc),
+                'is_active': True
+            }
+            farmer = self.repository.create_farmer(farmer_data_dict)
 
-        legal_documents = []
-        if farmer_data.legal_documents:
-            for doc_data in farmer_data.legal_documents:
-                document_data = {
-                    'farmer_id': farmer.id,
-                    'document_type': doc_data.document_type,
-                    'document_url': doc_data.document_url,
-                    'issue_date': doc_data.issue_date
+            legal_documents = []
+            if farmer_data.legal_documents:
+                for doc_data in farmer_data.legal_documents:
+                    document = self.repository.create_legal_document(doc_data.model_dump())
+                    legal_documents.append(document)
+
+            if farmer_data.consent_form:
+                consent_dict = farmer_data.consent_form.model_dump()
+                consent_dict['document_url']=str(farmer_data.consent_form.document_url)
+                consent_form =self.repository.add_farmer_contract(consent_dict)
+
+            return self._convert_farmer_to_read(farmer, address, legal_documents)
+
+        except ValueError as e:
+            logging.error(f"Error while creating farmer {str(e)}")
+            raise ErrorFactory.bad_request(
+                message=str(e),
+                context={
+                    "farmer_service":"create_farmer"
                 }
-                document = self.repository.create_legal_document(document_data)
-                legal_documents.append(document)
-
-        return self._convert_farmer_to_read(farmer, address, legal_documents)
+            )
 
     def get_farmer(self, farmer_id: uuid.UUID) -> Optional[FarmerRead]:
         """Get a farmer by ID with relationships"""
@@ -83,27 +88,34 @@ class FarmerService:
         return FarmerList(farmers=farmer_reads)
 
     def update_farmer(self, update_data: FarmerUpdate) -> Optional[FarmerRead]:
-        """
-        Update a farmer and related data (address, legal documents).
-        Refactored for reduced cognitive complexity.
-        """
-        farmer = self.repository.get_farmer_by_id(update_data.id)
-        if not farmer:
-            return None
+        try:
+            farmer = self.repository.get_farmer_by_id(update_data.id)
+            if not farmer:
+                return None
 
-        # Validate phone number uniqueness if changed
-        self._validate_phone_number_update(update_data, farmer)
-        
-        # Update farmer basic fields
-        updated_farmer = self._update_farmer_fields(farmer, update_data)
-        
-        # Update address if provided
-        address = self._update_farmer_address(updated_farmer, update_data)
-        
-        # Update legal documents if provided
-        legal_documents = self._update_farmer_legal_documents(update_data)
+            # Validate phone number uniqueness if changed
+            self._validate_phone_number_update(update_data, farmer)
+            
+            # Update farmer basic fields
+            updated_farmer = self._update_farmer_fields(farmer, update_data)
+            
+            # Update address if provided
+            address = self._update_farmer_address(updated_farmer, update_data)
+            
+            # Update legal documents if provided
+            legal_documents = self._update_farmer_legal_documents(update_data)
 
-        return self._convert_farmer_to_read(updated_farmer, address, legal_documents)
+            return self._convert_farmer_to_read(updated_farmer, address, legal_documents)
+            
+        except ValueError as e:
+            logging.error(f"Error while creating farmer {str(e)}")
+            raise ErrorFactory.bad_request(
+                message=str(e),
+                context={
+                    "farmer_service":"create_farmer"
+                }
+            )
+
 
     def delete_farmer(self, farmer_id: uuid.UUID) -> bool:
         """Delete a farmer and all related data"""

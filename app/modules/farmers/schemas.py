@@ -7,7 +7,7 @@ from typing import Optional, List
 from app.adapters.farmers.models import Gender, VerificationStatus
 
 # ====================== VALIDATION PATTERNS ======================
-PHONE_REGEX = re.compile(r"^\+?\d{7,15}$")
+PHONE_REGEX =  r'^\+(251)[97]\d{8}$'
 
 # ====================== ADDRESS SCHEMAS ======================
 class AddressBase(BaseModel):
@@ -43,6 +43,10 @@ class LegalDocumentUpdate(BaseModel):
     document_url: Optional[HttpUrl] = None
     issue_date: Optional[datetime] = None
 
+class FarmerContract(BaseModel):
+    name: Optional[str]
+    document_url: Optional[HttpUrl] = None
+
 
 class LegalDocumentRead(LegalDocumentBase):
     id: uuid.UUID
@@ -51,14 +55,18 @@ class LegalDocumentRead(LegalDocumentBase):
 
 class FarmerContractBase(BaseModel):
     farmer_id: Optional[uuid.UUID]=None
-    contract_url: HttpUrl
+    document_url: HttpUrl
     contract_name: str
+
+class FarmerContractRead(FarmerContractBase):
+    id: uuid.UUID
+
 
 class FarmerContractCreate(FarmerContractBase):
     pass
 
 class FarmerContractUpdate(FarmerContractBase):
-    pass
+    id: uuid.UUID
 
 # ====================== FARMER SCHEMAS ======================
 class FarmerBase(BaseModel):
@@ -70,6 +78,7 @@ class FarmerBase(BaseModel):
 class FarmerCreate(FarmerBase):
     address: AddressCreate
     legal_documents: Optional[List[LegalDocumentCreate]] = []
+    consent_form: Optional[FarmerContractCreate]=None
 
 class FarmerUpdate(BaseModel):
     id: uuid.UUID
