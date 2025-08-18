@@ -9,6 +9,7 @@ from app.adapters.product.models import (
     ProductWarehouse, ProductCrop, Category, ProductCategory, TransactionType
 )
 from app.adapters.product.interface import IProductRepository
+from app.logging import logging
 
 class ProductRepository(IProductRepository):
     def __init__(self, db: Session):
@@ -34,7 +35,7 @@ class ProductRepository(IProductRepository):
             self.db.refresh(db_category) 
             return db_category
         except IntegrityError as e:
-            print(e)
+            logging.error(f"Failed to create category {str(e)}")
             self.db.rollback()
             raise ValueError(str(e))  
 
@@ -138,7 +139,7 @@ class ProductRepository(IProductRepository):
             self.db.refresh(db_product)
             return db_product
         except IntegrityError as e:
-            print(e)
+            logging.error(f"Failed to create product {str(e)}")
             self.db.rollback()
             raise ValueError(str(e))
 

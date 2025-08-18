@@ -13,7 +13,7 @@ from app.adapters.order.models import (
     Customer,
     OrderStatus,
 )
-from app.adapters.order.interfaces import IOrderRepository
+from app.adapters.order.interface import IOrderRepository
 from app.core.exceptions import ErrorFactory
 from app.logging import logger
 
@@ -189,8 +189,10 @@ class OrderRepository(IOrderRepository):
             if not order:
                 return None
             
+            allowed_fields = {'customer_id', 'warehouse_id', 'status', 'notes',
+                              'subtotal', 'discount', 'adjustment', 'tax_amount', 'total_amount'}
             for key, value in order_info.items():
-                if hasattr(order, key):
+                if key in allowed_fields and hasattr(order, key):
                     setattr(order, key, value)
             
             self.db.commit()
@@ -436,13 +438,24 @@ class OrderRepository(IOrderRepository):
         try:
             updated_items = []
             for item_info in items_info:
-                item_id = item_info.pop('id')
-                order_item = self.get_order_item_by_id(item_id)
-                if order_item:
-                    for key, value in item_info.items():
-                        if hasattr(order_item, key):
-                            setattr(order_item, key, value)
-                    updated_items.append(order_item)
+    def bulk_update_order_items(self, items_info: List[dict]) -> List[OrderItems]:
+     """Update multiple order items"""
+     try:
+         updated_items = []
+         allowed_fields = {'product_id', 'quantity', 'unit_price', 'discount', 'tax_rate'}
+         for item_info in items_info:
+             item_id = item_info.get('id')
+             if not item_id:
+                 logger.warning("Skipping item update: missing 'id' field")
+                 continue
+             order_item = self.get_order_item_by_id(item_id)
+             if not order_item:
+                 logger.warning(f"Skipping item update: order item not found for id={item_id}")
+                 continue
+             for key, value in item_info.items():
+                 if key in allowed_fields and hasattr(order_item, key):
+                     setattr(order_item, key, value)
+             updated_items.append(order_item)
             
             self.db.commit()
             for item in updated_items:

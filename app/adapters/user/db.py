@@ -1,11 +1,11 @@
 import uuid
-from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from typing import List
 
 from app.adapters.user.interface import IUserRepository
 from app.adapters.user.models import UserModel, UserDBSchema, UserProvider
+from app.logging import logging
 
 class UserRepository(IUserRepository):
     def __init__(self, db_session: Session):
@@ -18,9 +18,9 @@ class UserRepository(IUserRepository):
             self.db.commit()
             self.db.refresh(user)
         except IntegrityError as e:
-            print(e)
+            logging.error(f"Failed to create user: {e}")
             self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User creation failed.")
+            raise ValueError("User creation failed.")
         return user
 
     def create_user_provider(self, user_id: str, provider_id: str) -> UserProvider:
@@ -34,23 +34,22 @@ class UserRepository(IUserRepository):
             self.db.refresh(user_provider)
         except IntegrityError:
             self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User creation failed.")
+            raise ValueError("User creation failed.")
         return user_provider
 
     def get_user_by_id(self, user_id: uuid.UUID) -> UserModel | None:
         return self.db.query(UserModel).filter(UserModel.id == user_id,UserModel.is_deleted==False).first()
 
     def get_user_providers(self, user_id)->List[UserProvider]:
-        return self.db.query(UserProvider).filter(UserProvider.user_id==user_id,UserModel.is_deleted==False).all()
+        return self.db.query(UserProvider) \
+            .filter(UserProvider.user_id == user_id) \
+            .all()
 
     def get_user_by_provider_id(self, provider_id: str):
-        print(provider_id)
-        user = self.db.query(UserModel).join(
-            UserProvider, UserProvider.user_id == UserModel.id
-        ).filter(UserProvider.provider_id == provider_id, UserModel.is_deleted==False).first()
-        print("User provider")
-        print(user)
-        return user
+         user = self.db.query(UserModel).join(
+             UserProvider, UserProvider.user_id == UserModel.id
+         ).filter(UserProvider.provider_id == provider_id, UserModel.is_deleted==False).first()
+         return user
 
     def get_user_by_email(self, email: str) -> UserModel | None:
         return self.db.query(UserModel).filter(UserModel.email == email, UserModel.is_deleted==False).first()
@@ -58,13 +57,13 @@ class UserRepository(IUserRepository):
     def get_user_by_phone(self, phone: str) -> UserModel | None:
         return self.db.query(UserModel).filter(UserModel.phone == phone,UserModel.is_deleted==False).first()
 
-    def get_all_users(self) -> list[UserModel]:
-        return self.db.query(UserModel).all()
+    def get_all_users(self) -> List[UserModel]:
+        return self.db.query(UserModel).filter(UserModel.is_deleted == False).all()
 
     def update_user(self, user_id: str, update_data: UserDBSchema) -> UserModel:
         user = self.get_user_by_id(user_id)
         if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+            raise ValueError("User not found.")
         for field, value in update_data.dict(exclude_unset=True).items():
             setattr(user, field, value)
         try:
@@ -72,12 +71,12 @@ class UserRepository(IUserRepository):
             self.db.refresh(user)
         except IntegrityError:
             self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User update failed due to integrity error.")
+            raise ValueError("User update failed due to integrity error.")
         return user
 
     def delete_user(self, user_id: str) -> None:
         user = self.get_user_by_id(user_id)
         if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+            raise ValueError("User not found.")
         user.is_deleted=True
         self.db.commit()

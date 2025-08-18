@@ -11,6 +11,7 @@ from app.adapters.employee.schema import(
     EmployeeStatus, 
     EmployeeType
 )
+from app.logging import logging
 
 class Department(BaseModel):
     __tablename__ = "departments"
@@ -156,7 +157,7 @@ class EmployeeProfile(BaseModel):
                 .label("salary_increase_this_month")
             )
         except Exception as e:
-            print(e)
+            logging.error(e)
 
 
 class EmployeeExperience(BaseModel):

@@ -77,10 +77,7 @@ class RoleService:
         self.repository.assign_user_role(user_id=user_id, role_id=role_id)
 
     def get_assigned_resources(self,role_id):
-        print("Role ID_____________________")
-        print(role_id)
         assigned_resources = self.repository.get_assigned_resources(role_id)
-        print(assigned_resources)
         return assigned_resources
 
     def unassign_role_from_user(self, user_id: UUID, role_id: UUID):

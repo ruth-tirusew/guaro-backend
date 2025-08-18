@@ -38,7 +38,6 @@ class WarehouseService:
         self.repository.delete_warehouse(warehouse_id=warehouse_id)
 
     def assign_agent(self, agent_id: str, warehouse_id:str):
-        print(agent_id)
         user = self.user_service.get_user(agent_id)
         if not user:
             raise NotFoundError

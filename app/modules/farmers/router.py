@@ -17,7 +17,6 @@ router = APIRouter(prefix="/farmers", tags=["Farmers"])
 
 @router.get("/details/{id}", response_model=Optional[FarmerRead], status_code=status.HTTP_200_OK)
 def get_farmer_by_id(id: UUID, farmer_service:FarmerServiceDep):
-    print(id)
     return farmer_service.get_farmer(id)
 
 @router.get("", response_model=FarmerList, status_code=status.HTTP_200_OK)

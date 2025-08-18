@@ -65,9 +65,9 @@ class WarehouseRepository(IWarehouseRepository):
             self.db.commit()
 
         else:
-            existing.is_deleted=True
-            self.db.commit()
-
+            if existing.is_deleted:
+                existing.is_deleted = False
+                self.db.commit()
     def unassign_agent(self, user_id: str, warehouse_id: str):
         warehouse_uuid = UUID(warehouse_id)
         user_uuid = UUID(user_id)

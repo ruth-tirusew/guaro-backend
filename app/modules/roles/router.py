@@ -19,8 +19,8 @@ async def create_role(
     role_service: RoleServiceDep,
     role: RoleCreate,
     request: Request,
-    # user_info: dict = Depends(require_auth()),
-    # _: None = Depends(require_role_management()),
+    user_info: dict = Depends(require_auth()),
+    _: None = Depends(require_role_management()),
 ):
     """Create a new role - requires role management permission"""
     try:
@@ -33,7 +33,7 @@ async def create_role(
             context={"operation": "create_role", "role_data": role.model_dump()}
         )
     except Exception as e:
-        raise ErrorFactory.internal_error(
+        raise ErrorFactory.internal_server_error(
             user_message="Failed to create role. Please try again later.",
             log_message=f"Role creation failed: {str(e)}",
             context={"operation": "create_role", "role_data": role.model_dump(), "error": str(e)}
@@ -51,7 +51,7 @@ async def get_all_roles(
         roles = role_service.get_all_roles()
         return [RoleRead.model_validate(r) for r in roles]
     except Exception as e:
-        raise ErrorFactory.internal_error(
+        raise ErrorFactory.internal_server_error(
             user_message="Failed to retrieve roles. Please try again later.",
             log_message=f"Role retrieval failed: {str(e)}",
             context={"operation": "get_all_roles", "error": str(e)}
@@ -78,7 +78,7 @@ async def get_role(
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e
-        raise ErrorFactory.internal_error(
+        raise ErrorFactory.internal_server_error(
             user_message="Failed to retrieve role. Please try again later.",
             log_message=f"Role retrieval failed: {str(e)}",
             context={"operation": "get_role", "role_id": role_id, "error": str(e)}
@@ -106,7 +106,7 @@ async def update_role(
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e
-        raise ErrorFactory.internal_error(
+        raise ErrorFactory.internal_server_error(
             user_message="Failed to update role. Please try again later.",
             log_message=f"Role update failed: {str(e)}",
             context={"operation": "update_role", "role_id": role_id, "error": str(e)}
@@ -124,7 +124,7 @@ async def delete_role(
     try:
         role_service.delete_role(role_id)
     except Exception as e:
-        raise ErrorFactory.internal_error(
+        raise ErrorFactory.internal_server_error(
             user_message="Failed to delete role. Please try again later.",
             log_message=f"Role deletion failed: {str(e)}",
             context={"operation": "delete_role", "role_id": role_id, "error": str(e)}
@@ -136,14 +136,14 @@ async def assign_resource_to_role(
     role_id: str, 
     resource_id: str,
     request: Request,
-    # user_info: dict = Depends(require_auth()),
-    # _: None = Depends(require_role_management()),
+    user_info: dict = Depends(require_auth()),
+    _: None = Depends(require_role_management()),
 ):
     """Assign a resource to a role - requires role management permission"""
     try:
         role_service.assign_resource_to_role(role_id, resource_id)
     except Exception as e:
-        raise ErrorFactory.internal_error(
+        raise ErrorFactory.internal_server_error(
             user_message="Failed to assign resource to role. Please try again later.",
             log_message=f"Resource assignment failed: {str(e)}",
             context={"operation": "assign_resource_to_role", "role_id": role_id, "resource_id": resource_id, "error": str(e)}
@@ -162,7 +162,7 @@ async def unassign_resource_from_role(
     try:
         role_service.unassign_resource_to_role(role_id, resource_id)
     except Exception as e:
-        raise ErrorFactory.internal_error(
+        raise ErrorFactory.internal_server_error(
             user_message="Failed to unassign resource from role. Please try again later.",
             log_message=f"Resource unassignment failed: {str(e)}",
             context={"operation": "unassign_resource_from_role", "role_id": role_id, "resource_id": resource_id, "error": str(e)}
@@ -181,7 +181,7 @@ async def get_resources_for_role(
         resources = role_service.get_resources_for_role(role_id)
         return [ResourceRead.model_validate(r) for r in resources]
     except Exception as e:
-        raise ErrorFactory.internal_error(
+        raise ErrorFactory.internal_server_error(
             user_message="Failed to retrieve role resources. Please try again later.",
             log_message=f"Role resources retrieval failed: {str(e)}",
             context={"operation": "get_resources_for_role", "role_id": role_id, "error": str(e)}

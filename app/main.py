@@ -97,7 +97,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.exception_handler(ValidationError)
 async def pydantic_validation_handler(request: Request, exc: ValidationError):
-    print(exc)
     api_error = ErrorFactory.validation_error(
         field="request_body",
         user_message="Invalid data format provided",
@@ -174,7 +173,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         }
     )
     
-    api_error = ErrorFactory.internal_error(
+    api_error = ErrorFactory.internal_server_error(
         user_message="An unexpected error occurred.",
         log_message=f"Unhandled exception: {str(exc)}",
         error_code="UNHANDLED_EXCEPTION",

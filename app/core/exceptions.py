@@ -152,10 +152,10 @@ class ErrorFactory:
         )
     
     @staticmethod
-    def internal_error(
+    def internal_server_error(
         user_message: Optional[str] = None,
         log_message: Optional[str] = None,
-        error_code: str = "INTERNAL_ERROR",
+        error_code: str = "internal_server_error",
         context: Optional[Dict[str, Any]] = None
     ) -> APIError:
         

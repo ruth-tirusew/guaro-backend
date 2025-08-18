@@ -1,6 +1,10 @@
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy import or_
+from typing import Optional, List
+from uuid import UUID
+
 from app.adapters.tax_and_charge.interface import ITaxRepository
 from app.adapters.tax_and_charge.models import Tax
-
 class TaxRepository(ITaxRepository): 
     def get_tax(self, tax_id: UUID) -> Optional[Tax]:
         """Get a single tax by ID"""
@@ -42,11 +46,12 @@ class TaxRepository(ITaxRepository):
                     continue
                 if hasattr(db_tax, key):
                     setattr(db_tax, key, value)
-            
-            self.db.commit()
-            self.db.refresh(db_tax)
+        except IntegrityError as e:
+            self.db.rollback()
+            raise ValueError(str(e)) from e
             return db_tax
         except IntegrityError:
+            log.info(f"Failed to update {str(e)}")
             self.db.rollback()
             raise ValueError("Tax update failed")
 
@@ -61,10 +66,8 @@ class TaxRepository(ITaxRepository):
 
     def search_taxes(self, query: str) -> List[Tax]:
         """Search taxes by name or description"""
-        return self.db.query(Tax).filter(
-            Tax.is_deleted == False,
-            or_(
-                Tax.name.ilike(f"%{query}%"),
-                Tax.description.ilike(f"%{query}%") if hasattr(Tax, 'description') else True
-            )
-        ).all()
+        q = self.db.query(Tax).filter(Tax.is_deleted == False)
+        predicates = [Tax.name.ilike(f"%{query}%")]
+        if hasattr(Tax, "description"):
+            predicates.append(Tax.description.ilike(f"%{query}%"))
+        return q.filter(or_(*predicates)).all()

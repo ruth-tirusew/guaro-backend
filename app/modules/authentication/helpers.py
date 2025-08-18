@@ -6,7 +6,7 @@ def handle_auth_exceptions(func):
         try:
             return func(*args, **kwargs)
         except Exception as e:
-            match type(e):
+            match e:
                 case errors.InvalidCredentialsError:
                     raise HTTPException(
                         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -34,7 +34,7 @@ def handle_auth_exceptions(func):
                 case errors.UserCreationError:
                     raise HTTPException(
                             status_code=status.HTTP_409_CONFLICT,
-                            detail=str(e)
+                            detail=(str(getattr(e, "errorMessage", "")).strip() or "Failed to create user")
                         ) from e
                    
                 case errors.UserUpdateError:

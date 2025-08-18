@@ -191,7 +191,7 @@ class FarmerService:
         try:
             self.repository.add_farmer_contract(contract_data=contract_data.dict())
         except Exception as e:
-            raise ErrorFactory.internal_error(
+            raise ErrorFactory.internal_server_error(
                 user_message="Failed to save farmer contract. Please try again",
                 log_message=str(e),
                 context="farmer_service:create_farmer_contract"

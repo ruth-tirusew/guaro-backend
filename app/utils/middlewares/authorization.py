@@ -85,9 +85,7 @@ class AuthorizationMiddleware:
             if not user:
                 logger.warning(f"User not found for provider_id: {user_id}")
                 return []
-            print("User found", user.id)
             roles = role_service.get_role_by_user_id(user.id)
-            print(roles)
             return roles
             
         except Exception as e:
@@ -119,7 +117,6 @@ class AuthorizationMiddleware:
             for role in user_roles:
                 assigned_resources = role_service.get_assigned_resources(role.id)
                 for res in assigned_resources:
-                    print(res)
                     all_resources.append(res["resource"])
                     if isinstance(res.get("actions"), list):
                         all_actions.extend(res["actions"])
@@ -149,9 +146,17 @@ class AuthorizationMiddleware:
         """FastAPI dependency for authentication"""
         def _require_auth(
             auth_service: AuthServiceDep,
+            user_service: UserServiceDep,
             credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
         ) -> Dict[str, Any]:
-            return self.authenticate_user(credentials, auth_service)
+            user_provider = self.authenticate_user(credentials, auth_service)
+            user = user_service.get_user_by_provider_id(user_provider.get("sub"))
+            if not user:
+                raise ErrorFactory.unauthorized(
+                    user_message="Failed to authenticate user",
+                    context={"error": "user_not_found", "provider_id": user_provider.get("sub")}
+                )
+            return user
         
         return _require_auth
     

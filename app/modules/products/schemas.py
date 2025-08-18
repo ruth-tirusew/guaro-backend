@@ -87,18 +87,16 @@ class BatchInfo(BaseModel):
     manufacture_date: Optional[Any] = None
     received_date: Optional[Any] = None
     notes: Optional[str] = None
-
+    
 class GRNRequest(BaseModel):
     warehouse_id: uuid.UUID
     product_id: uuid.UUID
     amount: float
-    cost_price: Optional[float]=None
-    selling_price: Optional[float]=None
-    warehouse_id: Optional[uuid.UUID]=None
+    cost_price: Optional[float] = None
+    selling_price: Optional[float] = None
     expiry_date: Optional[Any] = None
     manufacture_date: Optional[Any] = None
     notes: Optional[str] = None
-
 
 class ProductCategoryLink(BaseModel):
     product_id: uuid.UUID

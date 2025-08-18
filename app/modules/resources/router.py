@@ -24,7 +24,7 @@ async def create_resource(
     try:
         return resource_service.create_resource(resource)
     except Exception as e:
-        raise ErrorFactory.internal_error(
+        raise ErrorFactory.internal_server_error(
             user_message="Failed to create resource. Please try again later.",
             log_message=f"Resource creation failed: {str(e)}",
             context={
@@ -55,7 +55,7 @@ async def get_resource(
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e
-        raise ErrorFactory.internal_error(
+        raise ErrorFactory.internal_server_error(
             user_message="Failed to retrieve resource. Please try again later.",
             log_message=f"Resource retrieval failed: {str(e)}",
             context={"operation": "get_resource", "resource_id": resource_id, "error": str(e)}
@@ -71,7 +71,7 @@ async def list_resources(
     try:
         return resource_service.list_resources()
     except Exception as e:
-        raise ErrorFactory.internal_error(
+        raise ErrorFactory.internal_server_error(
             user_message="Failed to retrieve resources. Please try again later.",
             log_message=f"Resource listing failed: {str(e)}",
             context={"operation": "list_resources", "error": str(e)}
@@ -99,7 +99,7 @@ async def update_resource(
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e
-        raise ErrorFactory.internal_error(
+        raise ErrorFactory.internal_server_error(
             user_message="Failed to update resource. Please try again later.",
             log_message=f"Resource update failed: {str(e)}",
             context={"operation": "update_resource", "resource_id": resource_id, "error": str(e)}
@@ -118,7 +118,7 @@ async def delete_resource(
         resource_service.delete_resource(resource_id)
         return None
     except Exception as e:
-        raise ErrorFactory.internal_error(
+        raise ErrorFactory.internal_server_error(
             user_message="Failed to delete resource. Please try again later.",
             log_message=f"Resource deletion failed: {str(e)}",
             context={"operation": "delete_resource", "resource_id": resource_id, "error": str(e)}

@@ -41,7 +41,7 @@ class EmployeeRepository(IEmployeeRepository):
             self.db.refresh(employee)
         except IntegrityError:
             self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Employee profile creation failed.")
+            raise ValueError("Employee profile creation failed.")
         return employee
 
     def get_employee_by_id(self, employee_id: str) -> Optional[EmployeeProfile]:
@@ -49,7 +49,7 @@ class EmployeeRepository(IEmployeeRepository):
             uuid_obj = uuid.UUID(employee_id)
             return self.db.query(EmployeeProfile).filter(EmployeeProfile.id == uuid_obj).first()
         except ValueError:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid employee ID format.")
+            raise ValueError("Invalid employee ID format.")
 
     def get_employee_by_employee_id(self, employee_id: str) -> Optional[EmployeeProfile]:
         return self.db.query(EmployeeProfile).filter(EmployeeProfile.employee_id == employee_id).first()
@@ -66,7 +66,7 @@ class EmployeeRepository(IEmployeeRepository):
     def update_employee_profile(self, employee_id: str, update_data: EmployeeProfileDBSchema) -> Optional[EmployeeProfile]:
         employee = self.get_employee_by_id(employee_id)
         if not employee:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found.")
+            raise ValueError("Employee not found.")
         
         for field, value in update_data.dict(exclude_unset=True).items():
             setattr(employee, field, value)
@@ -76,13 +76,13 @@ class EmployeeRepository(IEmployeeRepository):
             self.db.refresh(employee)
         except IntegrityError:
             self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Employee profile update failed due to integrity error.")
+            raise ValueError("Employee profile update failed due to integrity error.")
         return employee
 
     def delete_employee_profile(self, employee_id: str) -> bool:
         employee = self.get_employee_by_id(employee_id)
         if not employee:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found.")
+            raise ValueError("Employee not found.")
         employee.is_deleted=True
         self.db.commit()
         return True
@@ -90,7 +90,7 @@ class EmployeeRepository(IEmployeeRepository):
     def activate_employee(self, employee_id: str) -> bool:
         employee = self.get_employee_by_id(employee_id)
         if not employee:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found.")
+            raise ValueError("Employee not found.")
         
         employee.status = EmployeeStatus.ACTIVE
         employee.is_active = True
@@ -100,7 +100,7 @@ class EmployeeRepository(IEmployeeRepository):
     def deactivate_employee(self, employee_id: str) -> bool:
         employee = self.get_employee_by_id(employee_id)
         if not employee:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found.")
+            raise ValueError("Employee not found.")
         
         employee.status = EmployeeStatus.INACTIVE
         employee.is_active = False
@@ -117,7 +117,7 @@ class EmployeeRepository(IEmployeeRepository):
             self.db.refresh(document)
         except IntegrityError:
             self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Employee document creation failed.")
+            raise ValueError("Employee document creation failed.")
         return document
 
     def get_employee_document_by_id(self, document_id: str) -> Optional[EmployeeDocument]:
@@ -125,14 +125,14 @@ class EmployeeRepository(IEmployeeRepository):
             uuid_obj = uuid.UUID(document_id)
             return self.db.query(EmployeeDocument).filter(EmployeeDocument.id == uuid_obj).first()
         except ValueError:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid document ID format.")
+            raise ValueError("Invalid document ID format.")
 
     def get_employee_documents_by_employee(self, employee_id: str) -> List[EmployeeDocument]:
         try:
             uuid_obj = uuid.UUID(employee_id)
             return self.db.query(EmployeeDocument).filter(EmployeeDocument.employee_id == uuid_obj).all()
         except ValueError:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid employee ID format.")
+            raise ValueError("Invalid employee ID format.")
 
     def get_employee_documents_by_type(self, employee_id: str, document_type: str) -> List[EmployeeDocument]:
         try:
@@ -144,12 +144,12 @@ class EmployeeRepository(IEmployeeRepository):
                 )
             ).all()
         except ValueError:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid employee ID format.")
+            raise ValueError("Invalid employee ID format.")
 
     def update_employee_document(self, document_id: str, update_data: EmployeeDocumentDBSchema) -> Optional[EmployeeDocument]:
         document = self.get_employee_document_by_id(document_id)
         if not document:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee document not found.")
+            raise ValueError("Employee document not found.")
         
         for field, value in update_data.dict(exclude_unset=True).items():
             setattr(document, field, value)
@@ -159,13 +159,13 @@ class EmployeeRepository(IEmployeeRepository):
             self.db.refresh(document)
         except IntegrityError:
             self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Employee document update failed due to integrity error.")
+            raise ValueError("Employee document update failed due to integrity error.")
         return document
 
     def delete_employee_document(self, document_id: str) -> bool:
         document = self.get_employee_document_by_id(document_id)
         if not document:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee document not found.")
+            raise ValueError("Employee document not found.")
         document.is_deleted=True
         self.db.commit()
         return True
@@ -180,7 +180,7 @@ class EmployeeRepository(IEmployeeRepository):
             self.db.refresh(review)
         except IntegrityError:
             self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Performance review creation failed.")
+            raise ValueError("Performance review creation failed.")
         return review
 
     def get_performance_review_by_id(self, review_id: str) -> Optional[EmployeePerformanceReview]:
@@ -188,19 +188,19 @@ class EmployeeRepository(IEmployeeRepository):
             uuid_obj = uuid.UUID(review_id)
             return self.db.query(EmployeePerformanceReview).filter(EmployeePerformanceReview.id == uuid_obj).first()
         except ValueError:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid review ID format.")
+            raise ValueError("Invalid review ID format.")
 
     def get_performance_reviews_by_employee(self, employee_id: str) -> List[EmployeePerformanceReview]:
         try:
             uuid_obj = uuid.UUID(employee_id)
             return self.db.query(EmployeePerformanceReview).filter(EmployeePerformanceReview.employee_id == uuid_obj).all()
         except ValueError:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid employee ID format.")
+            raise ValueError("Invalid employee ID format.")
 
     def update_performance_review(self, review_id: str, update_data: EmployeePerformanceReviewDBSchema) -> Optional[EmployeePerformanceReview]:
         review = self.get_performance_review_by_id(review_id)
         if not review:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Performance review not found.")
+            raise ValueError("Performance review not found.")
         
         for field, value in update_data.dict(exclude_unset=True).items():
             setattr(review, field, value)
@@ -210,13 +210,13 @@ class EmployeeRepository(IEmployeeRepository):
             self.db.refresh(review)
         except IntegrityError:
             self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Performance review update failed due to integrity error.")
+            raise ValueError("Performance review update failed due to integrity error.")
         return review
 
     def delete_performance_review(self, review_id: str) -> bool:
         review = self.get_performance_review_by_id(review_id)
         if not review:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Performance review not found.")
+            raise ValueError("Performance review not found.")
         review.is_deleted=True
         self.db.commit()
         return True
@@ -231,7 +231,7 @@ class EmployeeRepository(IEmployeeRepository):
             self.db.refresh(leave)
         except IntegrityError:
             self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Leave request creation failed.")
+            raise ValueError("Leave request creation failed.")
         return leave
 
     def get_leave_request_by_id(self, leave_id: str) -> Optional[EmployeeLeave]:
@@ -239,14 +239,14 @@ class EmployeeRepository(IEmployeeRepository):
             uuid_obj = uuid.UUID(leave_id)
             return self.db.query(EmployeeLeave).filter(EmployeeLeave.id == uuid_obj).first()
         except ValueError:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid leave ID format.")
+            raise ValueError("Invalid leave ID format.")
 
     def get_leave_requests_by_employee(self, employee_id: str) -> List[EmployeeLeave]:
         try:
             uuid_obj = uuid.UUID(employee_id)
             return self.db.query(EmployeeLeave).filter(EmployeeLeave.employee_id == uuid_obj).all()
         except ValueError:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid employee ID format.")
+            raise ValueError("Invalid employee ID format.")
 
     def get_leave_requests_by_status(self, employee_id: str, status: str) -> List[EmployeeLeave]:
         try:
@@ -258,12 +258,12 @@ class EmployeeRepository(IEmployeeRepository):
                 )
             ).all()
         except ValueError:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid employee ID format.")
+            raise ValueError("Invalid employee ID format.")
 
     def update_leave_request(self, leave_id: str, update_data: EmployeeLeaveDBSchema) -> Optional[EmployeeLeave]:
         leave = self.get_leave_request_by_id(leave_id)
         if not leave:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Leave request not found.")
+            raise ValueError("Leave request not found.")
         
         for field, value in update_data.dict(exclude_unset=True).items():
             setattr(leave, field, value)
@@ -273,13 +273,13 @@ class EmployeeRepository(IEmployeeRepository):
             self.db.refresh(leave)
         except IntegrityError:
             self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Leave request update failed due to integrity error.")
+            raise ValueError("Leave request update failed due to integrity error.")
         return leave
 
     def delete_leave_request(self, leave_id: str) -> bool:
         leave = self.get_leave_request_by_id(leave_id)
         if not leave:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Leave request not found.")
+            raise ValueError("Leave request not found.")
         leave.is_deleted=True
         self.db.commit()
         return True
@@ -294,7 +294,7 @@ class EmployeeRepository(IEmployeeRepository):
             self.db.refresh(ledger_entry)
         except IntegrityError:
             self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Salary ledger entry creation failed.")
+            raise ValueError("Salary ledger entry creation failed.")
         return ledger_entry
 
     def get_salary_ledger_by_id(self, ledger_id: str) -> Optional[EmployeeSalaryLedger]:
@@ -302,19 +302,19 @@ class EmployeeRepository(IEmployeeRepository):
             uuid_obj = uuid.UUID(ledger_id)
             return self.db.query(EmployeeSalaryLedger).filter(EmployeeSalaryLedger.id == uuid_obj).first()
         except ValueError:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid ledger ID format.")
+            raise ValueError("Invalid ledger ID format.")
 
     def get_salary_ledger_by_employee(self, employee_id: str) -> List[EmployeeSalaryLedger]:
         try:
             uuid_obj = uuid.UUID(employee_id)
             return self.db.query(EmployeeSalaryLedger).filter(EmployeeSalaryLedger.employee_id == uuid_obj).all()
         except ValueError:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid employee ID format.")
+            raise ValueError("Invalid employee ID format.")
 
     def update_salary_ledger_entry(self, ledger_id: str, update_data: EmployeeSalaryLedgerDBSchema) -> Optional[EmployeeSalaryLedger]:
         ledger_entry = self.get_salary_ledger_by_id(ledger_id)
         if not ledger_entry:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Salary ledger entry not found.")
+            raise ValueError("Salary ledger entry not found.")
         
         for field, value in update_data.dict(exclude_unset=True).items():
             setattr(ledger_entry, field, value)
@@ -324,13 +324,13 @@ class EmployeeRepository(IEmployeeRepository):
             self.db.refresh(ledger_entry)
         except IntegrityError:
             self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Salary ledger entry update failed due to integrity error.")
+            raise ValueError("Salary ledger entry update failed due to integrity error.")
         return ledger_entry
 
     def delete_salary_ledger_entry(self, ledger_id: str) -> bool:
         ledger_entry = self.get_salary_ledger_by_id(ledger_id)
         if not ledger_entry:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Salary ledger entry not found.")
+            raise ValueError("Salary ledger entry not found.")
         
         ledger_entry.is_deleted=True
         self.db.commit()
@@ -374,4 +374,4 @@ class EmployeeRepository(IEmployeeRepository):
             uuid_obj = uuid.UUID(employee_id)
             return self.db.query(EmployeeProfile).filter(EmployeeProfile.id == uuid_obj).first()
         except ValueError:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid employee ID format.")
+            raise ValueError("Invalid employee ID format.")

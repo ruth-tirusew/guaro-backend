@@ -86,9 +86,7 @@ class UserService:
     def get_user(self, user_id: uuid.UUID) -> Optional[UserRead]:
         """Get user by ID"""
         try:
-            print(user_id, "__________________")
             user = self.repository.get_user_by_id(user_id)
-            print("USER HERE", user)
             return UserRead.from_orm(user) if user else None
         except Exception as e:
             logger.error(f"Error getting user {user_id}: {str(e)}")
@@ -192,8 +190,20 @@ class UserService:
 
 
             self.repository.delete_user(user_id)
-            for user_provider in user_providers:                                                                                                                                                                                                                                                                         
-                self.authentication_service.delete_user(user_provider.provider_id)
+            for user_provider in user_providers:
+                try:
+                    self.authentication_service.delete_user(user_provider.provider_id)
+                except Exception as auth_delete_error:
+                    log_message=f"Failed to delete user from authentication provider {user_provider.provider_id}: {auth_delete_error}"
+                    logger.error(log_message)
+                    raise ErrorFactory.internal_server_error(
+                        user_message="Failed to completely delete user.",
+                        context={
+                            "user_id": user_id,
+                            "provider_id": user_provider.provider_id
+                        },
+                        log_message=log_message
+                    )
             
             logger.info(f"User deleted successfully: {user_id}")
             return True
@@ -237,7 +247,7 @@ class UserService:
                 logger.info(f"Role {role_id} assigned to user {user_id}")
                 return True
             else:
-                raise ErrorFactory.internal_error(
+                raise ErrorFactory.internal_server_error(
                     user_message="Failed to assign role to user",
                     context={"user_id": str(user_id), "role_id": str(role_id)}
                 )

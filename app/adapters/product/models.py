@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Numeric, DateTime, ForeignKey, Text, Boolean, Enum
+from sqlalchemy import Column, String, Numeric, DateTime, ForeignKey, Text, Boolean, Enum, select, func
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, mapped_column, Mapped
 from sqlalchemy.ext.hybrid import hybrid_property
 from enum import Enum as PyEnum
 
@@ -60,6 +60,30 @@ class Product(BaseModel):
         viewonly=True
     )
 
+    tax_links = relationship('ProductTax', back_populates='product', cascade='all, delete-orphan')
+    taxes = relationship(
+        'Tax',
+        secondary='product_taxes',
+        back_populates='products',
+        viewonly=True
+    )
+
+    @hybrid_property
+    def available_amount(self):
+        total = 0
+        for batch in self.batches:
+            total += batch.available_quantity or 0
+        return total
+
+    @available_amount.expression
+    def available_amount(cls):
+        """SQL expression for available amount calculation"""
+        return (
+            select(func.coalesce(func.sum(ProductBatch.available_quantity), 0))
+            .where(ProductBatch.product_id == cls.id)
+            .correlate(cls)
+            .scalar_subquery()
+        )
 
 class ProductCategory(BaseModel):
     __tablename__ = "product_categories"
@@ -67,7 +91,6 @@ class ProductCategory(BaseModel):
     product_id = Column(PG_UUID(as_uuid=True), ForeignKey('products.id', ondelete='CASCADE'), primary_key=True)
     category_id = Column(PG_UUID(as_uuid=True), ForeignKey('categories.id', ondelete='CASCADE'), primary_key=True)
 
-    # Relationships
     product = relationship('Product', back_populates='category_links')
     category = relationship('Category', back_populates='product_links')
 
@@ -103,6 +126,25 @@ class ProductBatch(BaseModel):
     creator = relationship("UserModel", foreign_keys=[created_by])
     modifier = relationship("UserModel", foreign_keys=[modified_by])
 
+
+
+class ProductTax(BaseModel):
+    __tablename__ = "product_taxes"
+    
+    product_id: Mapped[PG_UUID] = mapped_column(
+        PG_UUID(as_uuid=True), 
+        ForeignKey('products.id', ondelete='CASCADE'), 
+        primary_key=True
+    )
+    tax_id: Mapped[PG_UUID] = mapped_column(
+        PG_UUID(as_uuid=True), 
+        ForeignKey('tax.id', ondelete='CASCADE'), 
+        primary_key=True
+    )
+    
+    # Relationships
+    product = relationship('Product', back_populates='tax_links')
+    tax = relationship('Tax', back_populates='product_tax_links')
 
 
 class ProductCrop(BaseModel):

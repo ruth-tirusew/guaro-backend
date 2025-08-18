@@ -218,23 +218,9 @@ class ProductService:
             notes=notes
         )
 
-        # Return both product and batch information
         updated_product = self.repository.get(request.product_id)
-        return {
-            "product": Product.from_orm(updated_product),
-            "batch": {
-                "id": created_batch.id,
-                "batch_number": created_batch.batch_number,
-                "quantity": created_batch.quantity,
-                "available_quantity": created_batch.available_quantity,
-                "cost_price": created_batch.cost_price,
-                "selling_price": created_batch.selling_price,
-                "manufacture_date": created_batch.manufacture_date,
-                "expiry_date": created_batch.expiry_date,
-                "received_date": created_batch.received_date
-            }
-        }
-
+        return updated_product
+        
     def deplete_product(self, request: GRNRequest, created_by: UUID, batch_id: Optional[UUID] = None) -> Product:
         """
         Deplete product from inventory - reduces stock from specific batch or FIFO

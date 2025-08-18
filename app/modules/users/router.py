@@ -104,12 +104,12 @@ def update_user(
     current_user_obj = user_service.get_user_by_provider_id(current_user_id)
         
     if not current_user_obj or str(current_user_obj.id) != user_id:
-            try:
-                require_user_management()(current_user)
-            except HTTPException:
-                raise ErrorFactory.forbidden(
-                    user_message="You can only update your own profile or need admin privileges"
-                )
+        try:
+            require_user_management()(current_user)
+        except HTTPException as err:
+            raise ErrorFactory.forbidden(
+                user_message="You can only update your own profile or you need user management privileges"
+            ) from err
                 
     return user_service.update_user(user_id, user_update)
 

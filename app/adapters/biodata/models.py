@@ -15,6 +15,7 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
 from app.models.base import BaseModel
+from app.logging import logging
 
 
 class CollectionDetail(BaseModel):
@@ -97,7 +98,7 @@ class Crop(BaseModel):
                 .label("total_available")
             )
         except Exception as e:
-            print(e)
+            logging.error(e)
 
 
 

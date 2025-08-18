@@ -2,9 +2,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 from app.adapters.role.interface import IRoleRepository
 from app.adapters.role.models import Role, RoleDBSchema, RoleCreate, RoleResource, UserRole
-from app.adapters.resource.models import Resource  # Add this import
+from app.adapters.resource.models import Resource 
 from typing import List, Optional
 from uuid import UUID
+
+from app.logging import logging
 
 
 class RoleRepository(IRoleRepository):
@@ -33,7 +35,6 @@ class RoleRepository(IRoleRepository):
     def get_role_by_user_id(self, user_id: UUID) -> List[RoleDBSchema]:
         """Get all roles assigned to a user - FIXED VERSION"""
         try:
-            print(user_id)
             roles = (
                 self.db.query(Role)
                 .join(UserRole, Role.id == UserRole.role_id)
@@ -45,7 +46,7 @@ class RoleRepository(IRoleRepository):
             )
             return [RoleDBSchema.model_validate(role) for role in roles]
         except Exception as e:
-            print(f"Error in get_role_by_user_id: {str(e)}")
+            logging.error(f"Error in get_role_by_user_id: {str(e)}")
             return []
 
     def get_role_by_name(self, name: str) -> Optional[RoleDBSchema]:
@@ -211,7 +212,7 @@ class RoleRepository(IRoleRepository):
             return False  # Already assigned
             
         except Exception as e:
-            print(f"Error in assign_user_role: {str(e)}")
+            logging.error(f"Error in assign_user_role: {str(e)}")
             self.db.rollback()
             return False
 
@@ -232,7 +233,7 @@ class RoleRepository(IRoleRepository):
             return False 
             
         except Exception as e:
-            print(f"Error in unassign_user_role: {str(e)}")
+            logging.error(f"Error in unassign_user_role: {str(e)}")
             self.db.rollback()
             return False
 

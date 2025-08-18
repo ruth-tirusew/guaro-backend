@@ -1,12 +1,12 @@
 from datetime import datetime
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError
-from fastapi import HTTPException, status
 from typing import List, Optional
 from uuid import UUID
 
 from app.adapters.biodata.interface import IBiodataRepository
 from app.adapters.biodata.models import Crop, InitialBiodata, CropAmountLedger, CropPriceLedger, GoodsReceiving, CropWarehouse
+from app.logging import logging
 
 class BiodataRepository(IBiodataRepository):
     def __init__(self, db_session: Session):
@@ -19,9 +19,10 @@ class BiodataRepository(IBiodataRepository):
             self.db.commit()
             self.db.refresh(crop)
             return crop
-        except IntegrityError:
+        except IntegrityError as e:
+            logging.error(f"Crop creation failed {str(e)}")
             self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Crop creation failed")
+            raise ValueError("Crop creation failed")
 
     def get_crop_by_id(self, crop_id: UUID) -> Optional[Crop]:
         return (
@@ -46,17 +47,21 @@ class BiodataRepository(IBiodataRepository):
             self.db.commit()
             self.db.refresh(crop)
             return crop
-        except IntegrityError:
+        except IntegrityError as e:
+            logging.error(f"Crop update failed {str(e)}")
             self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Crop update failed")
+            raise ValueError("Crop update failed")
 
     def delete_crop(self, crop_id: UUID) -> bool:
         crop = self.get_crop_by_id(crop_id)
         if crop:
-            crop.is_deleted=True
+            crop.is_deleted = True
             self.db.commit()
             return True
         return False
+
+    def get_all_crops(self) -> List[Crop]:
+        return self.db.query(Crop).filter(Crop.is_deleted == False).all()
 
     def create_initial_biodata(self, biodata_data: dict) -> InitialBiodata:
         try:
@@ -65,9 +70,10 @@ class BiodataRepository(IBiodataRepository):
             self.db.commit()
             self.db.refresh(biodata)
             return biodata
-        except IntegrityError:
+        except IntegrityError as e:
+            logging.error(f"InitialBiodata creation failed {str(e)}")
             self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="InitialBiodata creation failed")
+            raise ValueError("InitialBiodata creation failed")
 
     def get_initial_biodata_by_id(self, biodata_id: UUID) -> Optional[InitialBiodata]:
         return self.db.query(InitialBiodata).filter(InitialBiodata.id == biodata_id).first()
@@ -89,9 +95,10 @@ class BiodataRepository(IBiodataRepository):
             self.db.commit()
             self.db.refresh(biodata)
             return biodata
-        except IntegrityError:
+        except IntegrityError as e:
+            logging.error(f"InitialBiodata update failed {str(e)}")
             self.db.rollback()
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="InitialBiodata update failed")
+            raise ValueError("InitialBiodata update failed")
 
     def delete_initial_biodata(self, biodata_id: UUID) -> bool:
         biodata = self.get_initial_biodata_by_id(biodata_id)

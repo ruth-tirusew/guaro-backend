@@ -9,7 +9,7 @@ class ITaxRepository(ABC):
         pass
     
     @abstractmethod
-    def list_tax(self, tax_id: UUID) -> List[Tax]:
+    def list_taxes(self, tax_type: Optional[str] = None) -> List[Tax]:
         pass
 
     @abstractmethod
