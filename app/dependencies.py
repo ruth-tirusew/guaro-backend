@@ -11,6 +11,7 @@ from app.adapters.farmers.db import FarmerRepository
 from app.adapters.product.db import ProductRepository
 from app.adapters.resource.db import ResourceRepository
 from app.adapters.role.db import RoleRepository
+from app.adapters.tax_and_charge.db import TaxRepository
 from app.adapters.warehouse.db import WarehouseRepository
 from app.adapters.user.db import UserRepository
 
@@ -21,6 +22,7 @@ from app.modules.farmers.service import FarmerService
 from app.modules.products.service import ProductService
 from app.modules.resources.service import ResourceService
 from app.modules.roles.service import RoleService
+from app.modules.tax_and_charge.service import TaxService
 from app.modules.warehouse.service import WarehouseService
 from app.modules.users.service import UserService
 
@@ -74,6 +76,10 @@ def get_product_repository(db: Session = Depends(get_db)) -> ProductRepository:
 def get_employee_repository(db: Session = Depends(get_db)) -> EmployeeRepository:
     """Get employee repository with database session"""
     return EmployeeRepository(db)
+
+def get_tax_repository(db: Session = Depends(get_db)) -> TaxRepository:
+    return TaxRepository(db)
+
 
 # Service Layer Dependencies (Request-scoped)
 def get_resource_service(
@@ -149,6 +155,12 @@ def get_employee_service(
     """Get employee service with dependencies"""
     return EmployeeService(employee_repository=employee_repository)
 
+def get_tax_service(
+    tax_repository: TaxRepository = Depends(get_tax_repository)
+) -> TaxService:
+    return TaxService(tax_repository=tax_repository)
+
+
 AuthServiceDep = Annotated[AuthenticationService, Depends(get_auth_service)]
 UserServiceDep = Annotated[UserService, Depends(get_user_service)]
 FarmerServiceDep = Annotated[FarmerService, Depends(get_farmer_service)]
@@ -158,3 +170,4 @@ RoleServiceDep = Annotated[RoleService, Depends(get_role_service)]
 WarehouseServiceDep = Annotated[WarehouseService, Depends(get_warehouse_service)]
 ProductServiceDep = Annotated[ProductService, Depends(get_product_service)]
 EmployeeServiceDep = Annotated[EmployeeService, Depends(get_employee_service)]
+TaxServiceDep = Annotated[TaxService, Depends(get_tax_service)]
