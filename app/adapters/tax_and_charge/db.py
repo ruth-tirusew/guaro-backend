@@ -1,11 +1,14 @@
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import or_
+from sqlalchemy.orm import Session
 from typing import Optional, List
 from uuid import UUID
 
 from app.adapters.tax_and_charge.interface import ITaxRepository
 from app.adapters.tax_and_charge.models import Tax
 class TaxRepository(ITaxRepository): 
+    def __init__(self, db: Session):
+        self.db = db
     def get_tax(self, tax_id: UUID) -> Optional[Tax]:
         """Get a single tax by ID"""
         return self.db.query(Tax).filter(
@@ -50,10 +53,6 @@ class TaxRepository(ITaxRepository):
             self.db.rollback()
             raise ValueError(str(e)) from e
             return db_tax
-        except IntegrityError:
-            log.info(f"Failed to update {str(e)}")
-            self.db.rollback()
-            raise ValueError("Tax update failed")
 
     def delete_tax(self, tax_id: UUID) -> None:
         """Soft delete a tax"""

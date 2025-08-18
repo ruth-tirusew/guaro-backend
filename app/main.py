@@ -23,6 +23,7 @@ from app.modules.resources.router import router as resource_router
 from app.modules.roles.router import router as role_router
 from app.modules.warehouse.router import router as warehouse_router
 from app.modules.users.router import router as user_router
+from app.modules.tax_and_charge.router import router as tax_router
 
 from app.utils.middlewares.authorization import auth_middleware
 
@@ -54,6 +55,7 @@ app.include_router(role_router, prefix=prefix)
 app.include_router(resource_router, prefix=prefix)
 app.include_router(user_router, prefix=prefix)
 app.include_router(warehouse_router, prefix=prefix)
+app.include_router(tax_router, prefix=prefix)
 
 
 @app.exception_handler(APIError)
