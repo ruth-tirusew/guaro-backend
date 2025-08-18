@@ -1,4 +1,3 @@
-import csv
 import io
 from typing import Optional, List, Dict, Any
 from uuid import UUID
@@ -437,32 +436,27 @@ class OrderRepository(IOrderRepository):
         """Update multiple order items"""
         try:
             updated_items = []
+            allowed_fields = {'product_id', 'quantity', 'unit_price', 'discount', 'tax_rate'}
             for item_info in items_info:
-    def bulk_update_order_items(self, items_info: List[dict]) -> List[OrderItems]:
-     """Update multiple order items"""
-     try:
-         updated_items = []
-         allowed_fields = {'product_id', 'quantity', 'unit_price', 'discount', 'tax_rate'}
-         for item_info in items_info:
-             item_id = item_info.get('id')
-             if not item_id:
-                 logger.warning("Skipping item update: missing 'id' field")
-                 continue
-             order_item = self.get_order_item_by_id(item_id)
-             if not order_item:
-                 logger.warning(f"Skipping item update: order item not found for id={item_id}")
-                 continue
-             for key, value in item_info.items():
-                 if key in allowed_fields and hasattr(order_item, key):
-                     setattr(order_item, key, value)
-             updated_items.append(order_item)
-            
-            self.db.commit()
-            for item in updated_items:
-                self.db.refresh(item)
-            
-            logger.info(f"Bulk updated {len(updated_items)} order items")
-            return updated_items
+                item_id = item_info.get('id')
+                if not item_id:
+                    logger.warning("Skipping item update: missing 'id' field")
+                    continue
+                order_item = self.get_order_item_by_id(item_id)
+                if not order_item:
+                    logger.warning(f"Skipping item update: order item not found for id={item_id}")
+                    continue
+                for key, value in item_info.items():
+                    if key in allowed_fields and hasattr(order_item, key):
+                        setattr(order_item, key, value)
+                updated_items.append(order_item)
+                
+                self.db.commit()
+                for item in updated_items:
+                    self.db.refresh(item)
+                
+                logger.info(f"Bulk updated {len(updated_items)} order items")
+                return updated_items
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error bulk updating order items: {str(e)}")
@@ -481,23 +475,6 @@ class OrderRepository(IOrderRepository):
         except Exception as e:
             self.db.rollback()
             logger.error(f"Error clearing order items for order {order_id}: {str(e)}")
-            raise
-
-    # Transaction Methods
-    def begin_transaction(self):
-        """Begin database transaction"""
-        try:
-            self.db.begin()
-        except Exception as e:
-            logger.error(f"Error beginning transaction: {str(e)}")
-            raise
-
-    def commit_transaction(self):
-        """Commit database transaction"""
-        try:
-            self.db.commit()
-        except Exception as e:
-            logger.error(f"Error committing transaction: {str(e)}")
             raise
 
     def rollback_transaction(self):
@@ -564,14 +541,12 @@ class OrderRepository(IOrderRepository):
         output = io.StringIO()
         writer = csv.writer(output)
         
-        # Write header
         writer.writerow([
             'Order ID', 'Order Number', 'Customer Name', 'Customer Phone',
             'Order Date', 'Status', 'Subtotal', 'Discount', 'Adjustment',
             'Tax Amount', 'Total Amount', 'Items Count'
         ])
         
-        # Write data
         for order in orders:
             customer_name = ''
             customer_phone = ''
