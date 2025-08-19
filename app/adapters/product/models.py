@@ -18,6 +18,7 @@ class TransactionType(PyEnum):
     RETURN = "return"
     DAMAGE = "damage"
     EXPIRY = "expiry"
+    RESERVE = "reserve"
 
 
 class Category(BaseModel):
@@ -74,6 +75,7 @@ class Product(BaseModel):
     def available_amount(self):
         total = 0
         for batch in self.batches:
+            print(batch.available_quantity, "From model")
             total += batch.available_quantity or 0
         return total
 
@@ -131,7 +133,7 @@ class ProductBatch(BaseModel):
         """
         Available quantity = total quantity - reserved quantity
         """
-        return (self.quantity or Decimal('0.0')) - (self.reserved_quantity or Decimal('0.0'))
+        return (Decimal(self.quantity) or Decimal('0.0')) - (Decimal(self.reserved_quantity) or Decimal('0.0'))
 
     @available_quantity.expression
     def available_quantity(cls):

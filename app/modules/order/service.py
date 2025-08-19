@@ -106,12 +106,11 @@ class OrderService:
             orders=order_summaries
         )
 
-    # Order Service Methods
     def create_order(self, order_data: OrderCreate, created_by: UUID) -> OrderResponse:
-        """Create a new order with items"""
         try:
             order_dict = order_data.model_dump(exclude={'items'})
-            order_dict['created_by']=created_by
+            order_dict['created_by'] = created_by
+            
             if not order_dict.get('order_number'):
                 order_dict['order_number'] = self._generate_order_number()
             
@@ -119,31 +118,115 @@ class OrderService:
             
             if order_data.items:
                 items_data = []
-                for item in order_data.items:
-                    self.product_service.reserve_product(item.product_id, item.quantity, created_by)
-                    product = self.product_service.get_product_by_id(item.product_id)
-                    if not product:
-                        raise ErrorFactory.bad_request(
-                            message="Product not fount"
+                reservations_made = []
+                
+                try:
+                    for item in order_data.items:
+                        product = self.product_service.get_product_by_id(item.product_id)
+                        if not product:
+                            raise ErrorFactory.bad_request("Product not found")
+                        
+                        self.product_service.reserve_product(
+                            product_id=item.product_id,
+                            amount=item.quantity,
+                            created_by=created_by,
+                            warehouse_id=created_order.warehouse_id
                         )
-                    item_dict = item.model_dump()
-                    item_dict['product_name']=product.name
-                    item_dict['product_sku']=product.sku
-                    item_dict['unit_of_measure']=product.unit_of_measure
-                    item_dict['order_id'] = created_order.id
-                    items_data.append(item_dict)
-                
-                self.repository.bulk_add_order_items(created_order.id, items_data)
-                
-                self._recalculate_order_totals(created_order.id)
+                        
+                        reservations_made.append({
+                            'product_id': item.product_id,
+                            'quantity': item.quantity
+                        })
+                        
+                        item_dict = item.model_dump()
+                        item_dict['product_name'] = product.name
+                        item_dict['product_sku'] = product.sku
+                        item_dict['unit_of_measure'] = product.unit_of_measure
+                        item_dict['order_id'] = created_order.id
+                        items_data.append(item_dict)
+                    
+                    self.repository.bulk_add_order_items(created_order.id, items_data)
+                    self._recalculate_order_totals(created_order.id)
+                    
+                except Exception as e:
+                    for reservation in reservations_made:
+                        try:
+                            self.product_service.unreserve_product(
+                                product_id=reservation['product_id'],
+                                amount=reservation['quantity'],
+                                created_by=created_by,
+                                warehouse_id=created_order.warehouse_id,
+                                order_id=created_order.id
+                            )
+                        except Exception as unreserve_error:
+                            logger.error(f"Failed to rollback reservation: {unreserve_error}")
+                    raise
             
-            # Refresh and return
             final_order = self.repository.get_order_by_id(created_order.id)
             return OrderResponse.model_validate(final_order)
             
         except Exception as e:
             logger.error(f"Service error creating order: {str(e)}")
             raise
+
+    def update_order_status(self, order_id: UUID, status_data: OrderStatusUpdate) -> OrderResponse:
+        existing = self.get_order_by_id(order_id=order_id)
+        if not existing:
+            raise ErrorFactory.not_found(
+                resource="Order",
+                user_message="Order not found"
+            )
+        if existing == status_data.status:
+            raise ErrorFactory.bad_request(
+                            message=f"Order is already {status_data.status.lower()}"
+                        )
+        match status_data.status:
+                case OrderStatus.CONFIRMED | OrderStatus.DELIVERED:                        
+                    for item in updated_order.order_items:
+                        request = GRNRequest(
+                            warehouse_id=updated_order.warehouse_id,
+                            product_id=item.product_id,
+                            amount=item.quantity
+                        )
+                        self.product_service.deplete_product(request, status_data.modified_by)
+                
+                case OrderStatus.CANCELLED | OrderStatus.RETURNED:
+                    if existing.status==OrderStatus.CANCELLED.value:
+                        raise ErrorFactory.bad_request(
+                            message="Order is already cancelled"
+                        )
+                    for item in updated_order.order_items:
+                        self.product_service.unreserve_product(
+                            product_id=item.product_id,
+                            amount=item.quantity,
+                            created_by=status_data.modified_by,
+                            warehouse_id=updated_order.warehouse_id,
+                            order_id=order_id
+                        )
+                
+                case OrderStatus.PENDING:
+                    for item in updated_order.order_items:
+                        self.product_service.reserve_product(
+                            product_id=item.product_id,
+                            amount=item.quantity,
+                            created_by=status_data.modified_by,
+                            warehouse_id=updated_order.warehouse_id
+                        )
+                
+                case _:
+                    logger.warning(f"Unhandled order status transition: {status_data.status}")
+
+        updated_order = self.repository.update_order_status(
+            order_id=order_id,
+            status=status_data.status,
+            modified_by=status_data.modified_by
+        )
+         
+        if status_data.notes:
+            self.repository.update_order(order_id, {"notes": status_data.notes})
+        
+        return OrderResponse.model_validate(updated_order)
+        
 
     def get_order_by_id(self, order_id: UUID) -> OrderResponse:
         """Get order by ID"""
@@ -189,43 +272,6 @@ class OrderService:
                 resource="Order",
                 user_message="Order not found"
             )
-        return OrderResponse.model_validate(updated_order)
-
-    def update_order_status(self, order_id: UUID, status_data: OrderStatusUpdate) -> OrderResponse:
-        updated_order = self.repository.update_order_status(
-            order_id=order_id,
-            status=status_data.status,
-            modified_by=status_data.modified_by
-        )
-
-        if not updated_order:
-            raise ErrorFactory.not_found(
-                resource="Order",
-                user_message="Order not found"
-            )
-
-        match status_data.status:
-            case OrderStatus.CONFIRMED | OrderStatus.DELIVERED:
-                for item in updated_order.order_items:
-                    request = GRNRequest(
-                        warehouse_id=updated_order.warehouse_id,
-                        product_id=item.product_id,
-                        amount=item.quantity
-                    )
-                    self.product_service.deplete_product(request, status_data.modified_by)
-
-
-            case OrderStatus.CANCELLED | OrderStatus.RETURNED:
-                # TODO: restock
-                pass
-
-            case _:
-                logger.warning(f"Unhandled order status transition: {status_data.status}")
-
-
-        if status_data.notes:
-            self.repository.update_order(order_id, {"notes": status_data.notes})
-
         return OrderResponse.model_validate(updated_order)
 
     def delete_order(self, order_id: UUID) -> None:

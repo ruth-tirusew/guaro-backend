@@ -21,7 +21,6 @@ class OrderRepository(IOrderRepository):
     def __init__(self, db_session: Session):
         self.db = db_session
 
-    # Customer Operations
     def create_customer(self, customer_info: dict) -> Customer:
         """Create a new customer"""
         try:
@@ -204,14 +203,18 @@ class OrderRepository(IOrderRepository):
             logger.error(f"Error updating order {order_id}: {str(e)}")
             raise
 
-    def update_order_status(self, order_id: UUID, status: OrderStatus,modified_by:UUID, notes: Optional[str]=None) -> Optional[Order]:
+    def update_order_status(self, order_id: UUID, status: OrderStatus, modified_by:UUID, notes: Optional[str]=None) -> Optional[Order]:
         """Update order status"""
         try:
             order = self.get_order_by_id(order_id)
             if not order:
                 return None
             
-            order.status = OrderStatus(status)
+            if isinstance(status, str):
+                status = OrderStatus(status)
+
+            
+            order.status = status
             order.notes = notes
             order.modified_by=modified_by
             self.db.commit()
@@ -498,6 +501,9 @@ class OrderRepository(IOrderRepository):
         """Bulk update order status"""
         try:
             orders = self.db.query(Order).filter(Order.id.in_(order_ids)).all()
+            if isinstance(status, str):
+                status = OrderStatus(status)
+
             
             for order in orders:
                 order.status = status
