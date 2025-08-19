@@ -24,7 +24,7 @@ class WarehouseService:
         warehouse = self.repository.get_warehouse_by_id(warehouse_id=warehouse_id)
         if not warehouse:
             raise NotFoundError
-        return Warehouse.from_orm(warehouse)
+        return Warehouse.model_validate(warehouse)
 
     def create_warehouse(self, data: WarehouseCreate):
         return self.repository.create_warehouse(data)
@@ -53,6 +53,6 @@ class WarehouseService:
         if  not warehouse:
             raise NotFoundError
         agents = self.repository.get_assigned_agent(warehouse_id=warehouse_id)
-        return AgentsList(agents=[AssignedAgent.from_orm(a) for a in  agents])
+        return AgentsList(agents=[AssignedAgent.model_validate(a) for a in  agents])
     
 

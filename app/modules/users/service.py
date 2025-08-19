@@ -71,7 +71,7 @@ class UserService:
                 user.id = str(user.id)
                 
             logger.info(f"User created successfully: {user.id}")
-            return UserRead.from_orm(user)
+            return UserRead.model_validate(user)
             
         except Exception as e:
             logger.error(f"Error creating user: {str(e)}")
@@ -87,7 +87,7 @@ class UserService:
         """Get user by ID"""
         try:
             user = self.repository.get_user_by_id(user_id)
-            return UserRead.from_orm(user) if user else None
+            return UserRead.model_validate(user) if user else None
         except Exception as e:
             logger.error(f"Error getting user {user_id}: {str(e)}")
             raise ErrorFactory.internal_server_error(
@@ -110,7 +110,7 @@ class UserService:
         """Get user by email address"""
         try:
             user = self.repository.get_user_by_email(email)
-            return UserRead.from_orm(user) if user else None
+            return UserRead.model_validate(user) if user else None
         except Exception as e:
             logger.error(f"Error getting user by email {email}: {str(e)}")
             raise ErrorFactory.internal_server_error(
@@ -123,7 +123,7 @@ class UserService:
         try:
             users = self.repository.get_all_users()
             return UserList(
-                users=[UserRead.from_orm(user) for user in users]
+                users=[UserRead.model_validate(user) for user in users]
             )
         except Exception as e:
             logger.error(f"Error listing users: {str(e)}")
@@ -159,7 +159,7 @@ class UserService:
             
             if user:
                 logger.info(f"User updated successfully: {user_id}")
-                return UserRead.from_orm(user)
+                return UserRead.model_validate(user)
             else:
                 raise ErrorFactory.not_found(
                     user_message="User not found",
@@ -320,7 +320,7 @@ class UserService:
     #             )
 
     #         users = self.repository.get_users_by_role_id(role_id)
-    #         return [UserRead.from_orm(user) for user in users]
+    #         return [UserRead.model_validate(user) for user in users]
             
     #     except Exception as e:
     #         logger.error(f"Error getting users for role {role_id}: {str(e)}")

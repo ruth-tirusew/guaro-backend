@@ -6,7 +6,7 @@ from app.adapters.resource.models import Resource
 from typing import List, Optional
 from uuid import UUID
 
-from app.logging import logging
+from app.logging import logger
 
 
 class RoleRepository(IRoleRepository):
@@ -46,7 +46,7 @@ class RoleRepository(IRoleRepository):
             )
             return [RoleDBSchema.model_validate(role) for role in roles]
         except Exception as e:
-            logging.error(f"Error in get_role_by_user_id: {str(e)}")
+            logger.error(f"Error in get_role_by_user_id: {str(e)}")
             return []
 
     def get_role_by_name(self, name: str) -> Optional[RoleDBSchema]:
@@ -212,7 +212,7 @@ class RoleRepository(IRoleRepository):
             return False  # Already assigned
             
         except Exception as e:
-            logging.error(f"Error in assign_user_role: {str(e)}")
+            logger.error(f"Error in assign_user_role: {str(e)}")
             self.db.rollback()
             return False
 
@@ -233,7 +233,7 @@ class RoleRepository(IRoleRepository):
             return False 
             
         except Exception as e:
-            logging.error(f"Error in unassign_user_role: {str(e)}")
+            logger.error(f"Error in unassign_user_role: {str(e)}")
             self.db.rollback()
             return False
 

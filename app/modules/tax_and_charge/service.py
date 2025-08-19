@@ -22,7 +22,7 @@ class TaxService:
         try:
             created = self.repository.create_tax(tax_data.model_dump())
             print(created)
-            return Tax.from_orm(created)
+            return Tax.model_validate(created)
 
         except ValueError as e:
             raise ErrorFactory.bad_request(
@@ -36,12 +36,12 @@ class TaxService:
             raise ErrorFactory.not_found(
                 resource="Tax"
             )
-        return Tax.from_orm(tax)
+        return Tax.model_validate(tax)
 
     def list_taxes(self, tax_type: Optional[str] = None) -> TaxList:
         """List all taxes with optional type filtering"""
         taxes = self.repository.list_taxes(tax_type)
-        return TaxList(items=[Tax.from_orm(tax) for tax in taxes])
+        return TaxList(items=[Tax.model_validate(tax) for tax in taxes])
 
     def update_tax(self, tax_id: UUID, tax_data: TaxUpdate) -> Tax:
         """Update an existing tax"""
@@ -59,9 +59,9 @@ class TaxService:
         if tax_data.name is not None or rate_value is not None:
             self._validate_tax(tax_data.name, rate_value)
         try:
-            update_data = {k: v for k, v in tax_data.dict().items() if v is not None}
+            update_data = tax_data.model_dump(exclude_none=True)
             updated_tax = self.repository.update_tax(tax_id, update_data)
-            return Tax.from_orm(updated_tax)
+            return Tax.model_validate(updated_tax)
         except ValueError as e:
             raise ErrorFactory.bad_request(
                 message=str(e)
@@ -84,18 +84,17 @@ class TaxService:
     def search_taxes(self, query: str) -> List[Tax]:
         """Search taxes by name or description"""
         if not query or len(query.strip()) < 2:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Search query must be at least 2 characters long"
+            raise ErrorFactory.bad_request(
+                message="Search query must be at least 2 characters long"
             )
         
         taxes = self.repository.search_taxes(query.strip())
-        return [Tax.from_orm(tax) for tax in taxes]
+        return [Tax.model_validate(tax) for tax in taxes]
 
     def get_taxes_by_type(self, tax_type: str) -> List[Tax]:
         """Get all taxes of a specific type"""
         taxes = self.repository.list_taxes(tax_type=tax_type)
-        return [Tax.from_orm(tax) for tax in taxes]
+        return [Tax.model_validate(tax) for tax in taxes]
 
     def _tax_name_exists(self, name: str) -> bool:
         """Check if a tax with the given name already exists"""
@@ -108,16 +107,20 @@ class TaxService:
         return any(tax.name.lower() == name.lower() and tax.id != exclude_id for tax in taxes)
 
 
-    def _validate_tax(self, name: str, rate: float) -> None:
-        clean_name = name.replace(" ", "").replace("_", "").replace("-", "")
-        is_valid_name = clean_name.isalnum() and 3 <= len(clean_name) <= 50
-        if not is_valid_name:
-            raise ErrorFactory.bad_request(
-                message="Tax name must be alphanumeric and between 3-50 characters"
-            )
+    def _validate_tax(self, name: Optional[str], rate: Optional[float]) -> None:
+        if name is not None:
+            cleaned = name.replace(" ", "").replace("_", "").replace("-", "")
+            if not (cleaned.isalnum() and 3 <= len(name) <= 50):
+                raise ErrorFactory.bad_request(
+                    message="Tax name must be alphanumeric and between 3-50 characters"
+                )
 
-        is_valid_rate = 0 <= rate <= 100
-        if not is_valid_rate:
-            raise ErrorFactory.bad_request(
-                message="Tax rate must be between 0 and 100"
-            )
+        if rate is not None:
+            try:
+                valid = 0 <= rate <= 100
+            except TypeError:
+                valid = False
+            if not valid:
+                raise ErrorFactory.bad_request(
+                    message="Tax rate must be between 0 and 100"
+                )

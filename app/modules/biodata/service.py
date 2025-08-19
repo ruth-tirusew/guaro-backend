@@ -53,7 +53,7 @@ class BiodataService:
         self.get_crop_by_id(request.crop_id)
         # self.warehouse_service.get_warehouse_by_id(request.warehouse_id)
         crop = self.repository.deplete(request.crop_id, request.amount, request.warehouse_id, request.notes)
-        return CropRead.from_orm(crop)   
+        return CropRead.model_validate(crop)   
 
     # InitialBiodata methods
     def create_initial_biodata(self, biodata_data: InitialBiodataCreate) -> InitialBiodataRead:

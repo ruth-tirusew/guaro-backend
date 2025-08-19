@@ -6,7 +6,7 @@ from uuid import UUID
 
 from app.adapters.biodata.interface import IBiodataRepository
 from app.adapters.biodata.models import Crop, InitialBiodata, CropAmountLedger, CropPriceLedger, GoodsReceiving, CropWarehouse
-from app.logging import logging
+from app.logging import logger
 
 class BiodataRepository(IBiodataRepository):
     def __init__(self, db_session: Session):
@@ -20,9 +20,9 @@ class BiodataRepository(IBiodataRepository):
             self.db.refresh(crop)
             return crop
         except IntegrityError as e:
-            logging.error(f"Crop creation failed {str(e)}")
+            logger.error(f"Crop creation failed: {str(e)}")
             self.db.rollback()
-            raise ValueError("Crop creation failed")
+            raise ValueError("Crop creation failed") from e
 
     def get_crop_by_id(self, crop_id: UUID) -> Optional[Crop]:
         return (
@@ -48,9 +48,10 @@ class BiodataRepository(IBiodataRepository):
             self.db.refresh(crop)
             return crop
         except IntegrityError as e:
-            logging.error(f"Crop update failed {str(e)}")
+            logger.error(f"Crop update failed {str(e)}")
             self.db.rollback()
-            raise ValueError("Crop update failed")
+            raise ValueError("Crop update failed") from e
+
 
     def delete_crop(self, crop_id: UUID) -> bool:
         crop = self.get_crop_by_id(crop_id)
@@ -71,9 +72,10 @@ class BiodataRepository(IBiodataRepository):
             self.db.refresh(biodata)
             return biodata
         except IntegrityError as e:
-            logging.error(f"InitialBiodata creation failed {str(e)}")
+            logger.error(f"InitialBiodata creation failed {str(e)}")
             self.db.rollback()
-            raise ValueError("InitialBiodata creation failed")
+            raise ValueError("InitialBiodata creation failed") from e
+
 
     def get_initial_biodata_by_id(self, biodata_id: UUID) -> Optional[InitialBiodata]:
         return self.db.query(InitialBiodata).filter(InitialBiodata.id == biodata_id).first()
@@ -96,9 +98,10 @@ class BiodataRepository(IBiodataRepository):
             self.db.refresh(biodata)
             return biodata
         except IntegrityError as e:
-            logging.error(f"InitialBiodata update failed {str(e)}")
+            logger.error(f"InitialBiodata update failed {str(e)}")
             self.db.rollback()
-            raise ValueError("InitialBiodata update failed")
+            raise ValueError("InitialBiodata update failed") from e
+
 
     def delete_initial_biodata(self, biodata_id: UUID) -> bool:
         biodata = self.get_initial_biodata_by_id(biodata_id)

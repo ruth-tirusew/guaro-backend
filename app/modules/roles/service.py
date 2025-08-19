@@ -37,7 +37,7 @@ class RoleService:
         role = self.repository.get_role_by_id(role_id)
         if not role:
             raise NotFoundError
-        return RoleRead.from_orm(role)
+        return RoleRead.model_validate(role)
 
     def assign_resource_to_role(self, role_id: str, resource_id: str) -> None:
         role = self.repository.get_role_by_id(role_id)

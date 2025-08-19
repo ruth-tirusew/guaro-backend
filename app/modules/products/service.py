@@ -25,13 +25,13 @@ class ProductService:
 
     def get_all_products(self) -> ProductList:
         products = self.repository.list()
-        return ProductList(products=[Product.from_orm(p) for p in products])
+        return ProductList(products=[Product.model_validate(p) for p in products])
 
     def get_product_by_id(self, id: UUID) -> ProductDetail:
         product = self.repository.get(id)
         if not product:
             raise ErrorFactory.not_found("Product")
-        return ProductDetail.from_orm(product)
+        return ProductDetail.model_validate(product)
 
     def create_product(self, product: ProductCreate, created_by: UUID):
         """Create a new product with proper validation"""
@@ -67,7 +67,7 @@ class ProductService:
                 self.get_category_by_id(category_id)
                 self.repository.add_product_to_category(saved_product.id, category_id)
         
-        return ProductDetail.from_orm(saved_product)
+        return ProductDetail.model_validate(saved_product)
 
     def update_product(self, product: ProductUpdate, modified_by: UUID):
         """Update product with proper validation and audit trail"""
@@ -128,7 +128,7 @@ class ProductService:
                 self.repository.add_product_to_category(product.id, category_id)
 
         saved_product = self.repository.update(product.id, product_dict)
-        return ProductDetail.from_orm(saved_product)
+        return ProductDetail.model_validate(saved_product)
 
     def delete_product(self, product_id: UUID) -> None:
         """Soft delete a product"""
@@ -140,7 +140,7 @@ class ProductService:
     def search_products(self, query: str) -> ProductList:
         """Search products by name, SKU, or description"""
         products = self.repository.search(query)
-        return ProductList(products=[Product.from_orm(p) for p in products])
+        return ProductList(products=[Product.model_validate(p) for p in products])
 
     def receive_product(self, request: GRNRequest, created_by: UUID) -> dict:
         """
@@ -242,10 +242,10 @@ class ProductService:
                 product_id=request.product_id,
                 warehouse_id=request.warehouse_id
             )
-            
+            # TODO: FIND A WAY TO DEFERENTIATE DEPLETION DIRECTLY FROM STOCK AND FROM ORDER
             available_batches = [
                 batch for batch in available_batches 
-                if batch.available_quantity > 0
+                if batch.reserved_quantity > 0
             ]
             available_batches.sort(key=lambda x: x.received_date)
             
@@ -254,17 +254,15 @@ class ProductService:
             
             batch_id = available_batches[0].id
 
-        # Validate batch has sufficient stock
         batch = self.repository.get_batch(batch_id)
         if not batch:
             raise ErrorFactory.not_found("Batch")
         
-        if batch.available_quantity < request.amount:
+        if batch.reserved_quantity < request.amount:
             raise ErrorFactory.bad_request(
-                f"Insufficient stock. Available: {batch.available_quantity}, Requested: {request.amount}"
+                f"Insufficient stock. Available: {batch.reserved_quantity}, Requested: {request.amount}"
             )
 
-        # Create amount ledger transaction
         transaction_reference = getattr(request, 'transaction_reference', f"OUT-{batch.batch_number}")
         notes = getattr(request, 'notes', f"Stock depleted - Batch: {batch.batch_number}")
         
@@ -278,7 +276,7 @@ class ProductService:
             notes=notes
         )
 
-        return Product.from_orm(updated_product)
+        return Product.model_validate(updated_product)
 
 
     def reserve_product(self, product_id: UUID, amount: float, created_by: UUID) -> Product:
@@ -374,14 +372,14 @@ class ProductService:
     def get_all_categories(self) -> CategoryList:
         """Get all categories"""
         categories = self.repository.list_category()
-        return CategoryList(categories=[Category.from_orm(c) for c in categories])
+        return CategoryList(categories=[Category.model_validate(c) for c in categories])
 
     def get_category_by_id(self, id: UUID) -> CategoryDetail:
         """Get category by ID"""
         category = self.repository.get_category(id)
         if not category:
             raise ErrorFactory.not_found("Category")
-        return CategoryDetail.from_orm(category)
+        return CategoryDetail.model_validate(category)
 
     def create_category(self, category: CategoryCreate, created_by: UUID) -> Category:
         """Create a new category"""
@@ -394,7 +392,7 @@ class ProductService:
             category_dict["image"] = category.image
             
         saved_category = self.repository.create_category(category_dict)
-        return Category.from_orm(saved_category)
+        return Category.model_validate(saved_category)
 
     def update_category(self, category: CategoryUpdate, modified_by: UUID) -> CategoryDetail:
         """Update an existing category"""
@@ -411,7 +409,7 @@ class ProductService:
             category_dict["image"] = category.image
         
         saved_category = self.repository.update_category(category.id, category_dict)
-        return CategoryDetail.from_orm(saved_category)
+        return CategoryDetail.model_validate(saved_category)
 
     def delete_category(self, category_id: UUID) -> None:
         """Delete a category"""
@@ -423,7 +421,7 @@ class ProductService:
     def search_categories(self, query: str) -> CategoryList:
         """Search categories"""
         categories = self.repository.search_categories(query)
-        return CategoryList(categories=[Category.from_orm(c) for c in categories])
+        return CategoryList(categories=[Category.model_validate(c) for c in categories])
 
     def add_product_to_category(self, product_id: UUID, category_id: UUID) -> None:
         """Add product to category"""
@@ -439,13 +437,13 @@ class ProductService:
         """Get all products in a category"""
         self.get_category_by_id(category_id)
         products = self.repository.get_products_by_category(category_id)
-        return ProductList(products=[Product.from_orm(p) for p in products])
+        return ProductList(products=[Product.model_validate(p) for p in products])
 
     def get_categories_by_product(self, product_id: UUID) -> CategoryList:
         """Get all categories for a product"""
         self.get_product_by_id(product_id)
         categories = self.repository.get_categories_by_product(product_id)
-        return CategoryList(categories=[Category.from_orm(c) for c in categories])
+        return CategoryList(categories=[Category.model_validate(c) for c in categories])
 
     def update_product_crop_ratio(self, product_id: UUID, crop_id: UUID, quantity_ratio: float) -> None:
         """Update the quantity ratio for a product-crop relationship"""

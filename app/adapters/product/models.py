@@ -1,9 +1,11 @@
 from datetime import datetime, timezone
+from decimal import Decimal
+from enum import Enum as PyEnum
+
 from sqlalchemy import Column, String, Numeric, DateTime, ForeignKey, Text, Boolean, Enum, select, func
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import relationship, mapped_column, Mapped
 from sqlalchemy.ext.hybrid import hybrid_property
-from enum import Enum as PyEnum
 
 from app.models.base import BaseModel
 
@@ -103,7 +105,6 @@ class ProductBatch(BaseModel):
     warehouse_id = Column(PG_UUID(as_uuid=True), ForeignKey('warehouses.id', ondelete='CASCADE'), nullable=False)
 
     quantity = Column(Numeric(12, 4), default=0.0)
-    available_quantity = Column(Numeric(12, 4), default=0.0)
     reserved_quantity = Column(Numeric(12, 4), default=0.0)
     cost_price = Column(Numeric(12, 4), default=0.0)
     selling_price = Column(Numeric(12, 4), default=0.0)
@@ -120,14 +121,24 @@ class ProductBatch(BaseModel):
     # Relationships
     product = relationship("Product", back_populates="batches")    
     warehouse_stocks = relationship('ProductWarehouse', back_populates='batch', cascade='all, delete-orphan')
-    
     amount_transactions = relationship("ProductAmountLedger", back_populates="batch", cascade='all, delete-orphan')
     
     creator = relationship("UserModel", foreign_keys=[created_by])
     modifier = relationship("UserModel", foreign_keys=[modified_by])
 
+    @hybrid_property
+    def available_quantity(self):
+        """
+        Available quantity = total quantity - reserved quantity
+        """
+        return (self.quantity or Decimal('0.0')) - (self.reserved_quantity or Decimal('0.0'))
 
-
+    @available_quantity.expression
+    def available_quantity(cls):
+        """
+        SQL expression for available quantity
+        """
+        return func.coalesce(cls.quantity, 0) - func.coalesce(cls.reserved_quantity, 0)
 class ProductTax(BaseModel):
     __tablename__ = "product_taxes"
     

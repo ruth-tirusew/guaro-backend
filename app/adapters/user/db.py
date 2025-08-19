@@ -5,7 +5,7 @@ from typing import List
 
 from app.adapters.user.interface import IUserRepository
 from app.adapters.user.models import UserModel, UserDBSchema, UserProvider
-from app.logging import logging
+from app.logging import logger
 
 class UserRepository(IUserRepository):
     def __init__(self, db_session: Session):
@@ -18,7 +18,7 @@ class UserRepository(IUserRepository):
             self.db.commit()
             self.db.refresh(user)
         except IntegrityError as e:
-            logging.error(f"Failed to create user: {e}")
+            logger.error(f"Failed to create user: {e}")
             self.db.rollback()
             raise ValueError("User creation failed.")
         return user

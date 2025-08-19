@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from app.adapters.farmers.interface import IFarmerRepository
 from app.core.exceptions import ErrorFactory
-from app.logging import logging
+from app.logging import logger
 from app.modules.farmers.schemas import (
     FarmerCreate, FarmerUpdate, FarmerRead, FarmerList,FarmerDetailResponse,
     AddressCreate, AddressUpdate, AddressRead, AddressList,
@@ -51,7 +51,7 @@ class FarmerService:
             return self._convert_farmer_to_read(farmer, address, legal_documents)
 
         except ValueError as e:
-            logging.error(f"Error while creating farmer {str(e)}")
+            logger.error(f"Error while creating farmer {str(e)}")
             raise ErrorFactory.bad_request(
                 message=str(e),
                 context={
@@ -106,9 +106,9 @@ class FarmerService:
             legal_documents = self._update_farmer_legal_documents(update_data)
 
             return self._convert_farmer_to_read(updated_farmer, address, legal_documents)
-            
+
         except ValueError as e:
-            logging.error(f"Error while creating farmer {str(e)}")
+            logger.error(f"Error while creating farmer {str(e)}")
             raise ErrorFactory.bad_request(
                 message=str(e),
                 context={
