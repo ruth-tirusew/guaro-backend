@@ -160,7 +160,7 @@ async def unassign_resource_from_role(
 ):
     """Unassign a resource from a role - requires role management permission"""
     try:
-        role_service.unassign_resource_to_role(role_id, resource_id)
+        role_service.unassign_resource_from_role(role_id, resource_id)
     except Exception as e:
         raise ErrorFactory.internal_server_error(
             user_message="Failed to unassign resource from role. Please try again later.",
