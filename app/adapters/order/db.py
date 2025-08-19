@@ -162,6 +162,7 @@ class OrderRepository(IOrderRepository):
     def get_order_by_id(self, order_id: UUID) -> Optional[Order]:
         """Get order by ID"""
         try:
+            logger.info(f"Fetching order {order_id}")
             return self.db.query(Order).options(
                 joinedload(Order.customer),
                 joinedload(Order.order_items)
@@ -203,15 +204,16 @@ class OrderRepository(IOrderRepository):
             logger.error(f"Error updating order {order_id}: {str(e)}")
             raise
 
-    def update_order_status(self, order_id: UUID, status: OrderStatus, notes: str) -> Optional[Order]:
+    def update_order_status(self, order_id: UUID, status: OrderStatus,modified_by:UUID, notes: Optional[str]=None) -> Optional[Order]:
         """Update order status"""
         try:
             order = self.get_order_by_id(order_id)
             if not order:
                 return None
             
-            order.status = status
+            order.status = OrderStatus(status)
             order.notes = notes
+            order.modified_by=modified_by
             self.db.commit()
             self.db.refresh(order)
             logger.info(f"Order status updated: {order_id} -> {status}")
@@ -490,7 +492,8 @@ class OrderRepository(IOrderRepository):
     def bulk_update_order_status(
         self, 
         order_ids: List[UUID], 
-        status: OrderStatus
+        status: OrderStatus,
+        modified_by: UUID
     ) -> List[Order]:
         """Bulk update order status"""
         try:
@@ -498,6 +501,7 @@ class OrderRepository(IOrderRepository):
             
             for order in orders:
                 order.status = status
+                order.modified_by=modified_by
             
             self.db.commit()
             for order in orders:
