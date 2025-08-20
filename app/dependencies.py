@@ -104,6 +104,12 @@ def get_role_service(
         resource_service=resource_service
     )
 
+def get_tax_service(
+    tax_repository: TaxRepository = Depends(get_tax_repository)
+) -> TaxService:
+    return TaxService(tax_repository=tax_repository)
+
+
 def get_user_service(
     auth_service: AuthenticationService = Depends(get_auth_service),
     user_repository: UserRepository = Depends(get_user_repository),
@@ -147,12 +153,14 @@ def get_product_service(
     biodata_service: BiodataService = Depends(get_biodata_service),
     warehouse_service: WarehouseService = Depends(get_warehouse_service),
     product_repository: ProductRepository = Depends(get_product_repository),
+    tax_service: TaxService = Depends(get_tax_service),
 ) -> ProductService:
     """Get product service with dependencies"""
     return ProductService(
         product_repository=product_repository, 
         crop_service=biodata_service, 
-        warehouse_service=warehouse_service
+        warehouse_service=warehouse_service,
+        tax_service=tax_service
     )
 
 def get_employee_service(
@@ -160,12 +168,6 @@ def get_employee_service(
 ) -> EmployeeService:
     """Get employee service with dependencies"""
     return EmployeeService(employee_repository=employee_repository)
-
-def get_tax_service(
-    tax_repository: TaxRepository = Depends(get_tax_repository)
-) -> TaxService:
-    return TaxService(tax_repository=tax_repository)
-
 
 def get_order_service(
     order_repo: IOrderRepository = Depends(get_order_repository),
