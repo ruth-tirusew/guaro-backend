@@ -10,12 +10,14 @@ from app.modules.products.schemas import (
 from app.modules.biodata.service import BiodataService
 from app.modules.warehouse.service import WarehouseService
 from app.logging import logger
+from app.modules.tax_and_charge.service import TaxService
 
 class ProductService:
-    def __init__(self, product_repository: IProductRepository, crop_service: BiodataService, warehouse_service: WarehouseService):
+    def __init__(self, product_repository: IProductRepository, crop_service: BiodataService, warehouse_service: WarehouseService, tax_service: TaxService):
         self.repository = product_repository
         self.warehouse_service = warehouse_service
         self.crop_service = crop_service
+        self.tax_service = tax_service
 
     def _generate_batch_number(self, product_id: UUID, warehouse_id: UUID) -> str:
         """Generate a unique batch number"""
@@ -290,17 +292,15 @@ class ProductService:
             available_in_batch = batch.available_quantity
             reserve_from_batch = min(available_in_batch, remaining_to_reserve)
             
-            new_available = available_in_batch - reserve_from_batch
             new_reserved = batch.reserved_quantity + reserve_from_batch
             
             self.repository.update_batch_quantities(
                 batch_id=batch.id,
-                available_qty=new_available,
                 reserved_qty=new_reserved
             )
             
             self.repository.create_amount_transaction({
-                'transaction_type': 'PURCHASE',
+                'transaction_type': 'RESERVE',
                 'quantity_change': -reserve_from_batch,
                 'product_id': product_id,
                 'warehouse_id': batch.warehouse_id,
@@ -511,7 +511,6 @@ class ProductService:
         
         self.repository.update_batch_quantities(
             batch_id=batch.id,
-            available_qty=float(batch.available_quantity),
             reserved_qty=new_reserved
         )
         
@@ -548,7 +547,6 @@ class ProductService:
             new_reserved = reserved_in_batch - deplete_from_batch
             self.repository.update_batch_quantities(
                 batch_id=batch.id,
-                available_qty=float(batch.available_quantity),
                 reserved_qty=new_reserved
             )
             
@@ -610,13 +608,10 @@ class ProductService:
             reserved_in_batch = batch.reserved_quantity
             unreserve_from_batch = min(reserved_in_batch, remaining_to_unreserve)
             
-            new_available = batch.available_quantity + unreserve_from_batch
-            print(new_available, "New Available")
             new_reserved = reserved_in_batch - unreserve_from_batch
             
             self.repository.update_batch_quantities(
                 batch_id=batch.id,
-                available_qty=new_available,
                 reserved_qty=new_reserved
             )
             
@@ -682,3 +677,28 @@ class ProductService:
                 for batch in batches
             ]
         }
+
+    def add_tax_to_product(self, product_id: UUID, tax_id: UUID) -> None:
+        """Add a tax to a product after validating both exist"""
+        self.get_product_by_id(product_id)
+        self.tax_service.get_tax_by_id(tax_id)
+        self.repository.add_tax_to_product(product_id, tax_id)
+
+    def remove_tax_from_product(self, product_id: UUID, tax_id: UUID) -> None:
+        """Remove a tax from a product"""
+        self.get_product_by_id(product_id)
+        self.repository.remove_tax_from_product(product_id, tax_id)
+
+    def get_product_total_tax_percentage(self, product_id: UUID) -> float:
+        """Return the sum of active tax percentages associated with a product"""
+        links = self.repository.get_product_taxes(product_id)
+        total = 0.0
+        for link in links:
+            try:
+                if getattr(link, 'tax', None) and not getattr(link.tax, 'is_deleted', False):
+                    rate = float(link.tax.tax_percentage or 0)
+                    total += rate
+            except Exception:
+                # If relationship not loaded or missing fields, skip
+                continue
+        return total

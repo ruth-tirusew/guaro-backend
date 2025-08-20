@@ -72,7 +72,7 @@ class BiodataRepository(IBiodataRepository):
             self.db.refresh(biodata)
             return biodata
         except IntegrityError as e:
-            logger.error(f"InitialBiodata creation failed {str(e)}")
+            logger.error(f"InitialBiodata creation failed: {str(e)}")
             self.db.rollback()
             raise ValueError("InitialBiodata creation failed") from e
 

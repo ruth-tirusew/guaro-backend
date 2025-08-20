@@ -15,6 +15,7 @@ class TaxType(str, enum.Enum):
     PROFIT_TAX = "PROFIT_TAX"
 
 class TaxBase(BaseModel):
+    id: Optional[UUID]=None
     name: str = Field(..., max_length=100, description="Tax name")
     tax_type: TaxType = Field(..., description="Type of tax")
     tax_percentage: Decimal = Field(default=Decimal('0.0'), ge=0, le=100, description="Tax percentage")

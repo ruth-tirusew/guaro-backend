@@ -213,10 +213,10 @@ class OrderRepository(IOrderRepository):
             if isinstance(status, str):
                 status = OrderStatus(status)
 
-            
             order.status = status
-            order.notes = notes
-            order.modified_by=modified_by
+            if notes is not None:
+                order.notes = notes
+            order.modified_by = modified_by
             self.db.commit()
             self.db.refresh(order)
             logger.info(f"Order status updated: {order_id} -> {status}")
@@ -443,7 +443,7 @@ class OrderRepository(IOrderRepository):
         """Update multiple order items"""
         try:
             updated_items = []
-            allowed_fields = {'product_id', 'quantity', 'unit_price', 'discount', 'tax_rate'}
+            allowed_fields = {'product_id', 'quantity', 'unit_price', 'discount_amount', 'tax_amount'}
             for item_info in items_info:
                 item_id = item_info.get('id')
                 if not item_id:

@@ -7,7 +7,7 @@ from sqlalchemy import or_
 from datetime import datetime, timezone
 from app.adapters.product.models import (
     Product, ProductBatch, ProductAmountLedger, ProductPriceLedger, 
-    ProductWarehouse, ProductCrop, Category, ProductCategory, TransactionType
+    ProductWarehouse, ProductCrop, Category, ProductCategory, ProductTax, TransactionType
 )
 from app.adapters.product.interface import IProductRepository
 from app.logging import logger
@@ -201,58 +201,65 @@ class ProductRepository(IProductRepository):
             
         return query.all()
 
-    
-    def reserve(self, batch_id: UUID, amount: float, created_by: UUID) -> ProductBatch:
+    def reserve(self, product_id: UUID, amount: float, warehouse_id: Optional[UUID] = None, batch_id: Optional[UUID] = None, created_by: Optional[UUID] = None) -> ProductBatch:
         """
-        Reserve stock from a specific batch
+        Reserve stock from a specific batch or from available batches
         Moves quantity from available to reserved
         """
-        batch = self.get_batch(batch_id)
-        if not batch:
-            raise ValueError("Batch not found")
+        if batch_id:
+            batch = self.get_batch(batch_id)
+            if not batch:
+                raise ValueError("Batch not found")
+        else:
+            batches = self.get_batches_by_product(product_id, warehouse_id)
+            available_batches = [b for b in batches if b.available_quantity >= amount]
+            if not available_batches:
+                raise ValueError("Insufficient available stock")
+            batch = sorted(available_batches, key=lambda x: x.received_date)[0]
         
-        available = Decimal(batch.available_quantity)
-        if available < amount:
+        available = Decimal(str(batch.available_quantity))
+        if available < Decimal(str(amount)):
             raise ValueError(f"Insufficient available stock. Available: {available}, Requested: {amount}")
         
-        # Update quantities
-        new_available = available - amount
-        new_reserved = Decimal(batch.reserved_quantity) + amount
-        
-        # batch.available_quantity = new_available
-        batch.reserved_quantity = new_reserved
+        new_reserved = Decimal(str(batch.reserved_quantity)) + Decimal(str(amount))
+        batch.reserved_quantity = float(new_reserved)
 
         self.db.commit()
         self.db.refresh(batch)
         return batch
 
-    def deplete(self, product_id: UUID, amount: float, warehouse_id: UUID, batch_id: UUID,
-                created_by: UUID, transaction_reference: str, notes: str) -> Product:
+    def deplete(self, product_id: UUID, amount: float, warehouse_id: UUID, batch_id: Optional[UUID] = None,
+                created_by: Optional[UUID] = None, transaction_reference: Optional[str] = None, notes: Optional[str] = None) -> Product:
         """
         Deplete stock from a specific batch
         Reduces reserved quantity (assumes stock was already reserved)
         """
-        batch = self.get_batch(batch_id)
-        if not batch:
-            raise ValueError("Batch not found")
+        if batch_id:
+            batch = self.get_batch(batch_id)
+            if not batch:
+                raise ValueError("Batch not found")
+        else:
+            batches = self.get_batches_by_product(product_id, warehouse_id)
+            reserved_batches = [b for b in batches if b.reserved_quantity >= amount]
+            if not reserved_batches:
+                raise ValueError("No batch found with sufficient reserved stock")
+            batch = reserved_batches[0]
         
-        reserved = float(batch.reserved_quantity)
-        if reserved < amount:
+        reserved = Decimal(str(batch.reserved_quantity))
+        if reserved < Decimal(str(amount)):
             raise ValueError(f"Insufficient reserved stock. Reserved: {reserved}, Requested: {amount}")
         
-        # Update quantities
-        new_reserved = reserved - amount
-        new_total = float(batch.quantity) - amount  # Reduce total quantity in warehouse
+        new_reserved = reserved - Decimal(str(amount))
+        new_total = Decimal(str(batch.quantity)) - Decimal(str(amount))
         
-        batch.reserved_quantity = new_reserved
-        batch.quantity = new_total
-        # available_quantity stays the same
-        
+        batch.reserved_quantity = float(new_reserved)
+        batch.quantity = float(new_total)
+
         self.db.commit()
         self.db.refresh(batch)
         return self.get(product_id)
 
-    def unreserve(self, batch_id: UUID, amount: float, created_by: UUID) -> ProductBatch:
+    def unreserve(self, batch_id: UUID, amount: float, created_by: Optional[UUID] = None) -> ProductBatch:
         """
         Unreserve stock from a specific batch
         Moves quantity from reserved back to available
@@ -261,48 +268,34 @@ class ProductRepository(IProductRepository):
         if not batch:
             raise ValueError("Batch not found")
         
-        reserved = Decimal(batch.reserved_quantity)
-        if reserved < amount:
+        reserved = Decimal(str(batch.reserved_quantity))
+        if reserved < Decimal(str(amount)):
             raise ValueError(f"Insufficient reserved stock. Reserved: {reserved}, Requested: {amount}")
         
-        # Update quantities
-        new_reserved = reserved - amount
-        new_available = Decimal(batch.available_quantity) + amount
-        
-        batch.reserved_quantity = new_reserved
-        # batch.available_quantity = new_available
-        # batch.quantity remains the same
+        new_reserved = reserved - Decimal(str(amount))
+        batch.reserved_quantity = float(new_reserved)
         
         self.db.commit()
         self.db.refresh(batch)
         return batch
 
-    def update_batch_quantities(self, batch_id: UUID, available_qty: float, reserved_qty: float = None) -> ProductBatch:
+    def update_batch_quantities(self, batch_id: UUID, reserved_qty: float = None) -> ProductBatch:
         """Update batch quantities with validation"""
         batch = self.get_batch(batch_id)
         if not batch:
             raise ValueError("Batch not found")
         
-        # Validate quantities
-        if available_qty < 0:
-            raise ValueError("Available quantity cannot be negative")
-        
         if reserved_qty is not None and reserved_qty < 0:
             raise ValueError("Reserved quantity cannot be negative")
-        print(available_qty)
-        # Update quantities
-        # batch.available_quantity = available_qty
+        
         if reserved_qty is not None:
             batch.reserved_quantity = reserved_qty
-        
-        # Ensure total quantity is consistent
-        batch.quantity = batch.available_quantity + Decimal(batch.reserved_quantity)
-        
+                
         self.db.commit()
         self.db.refresh(batch)
         return batch
 
-    def update_price(self, product_id: UUID, new_price: float, reason: str, created_by: UUID, approved_by: Optional[UUID] = None) -> Product:
+    def update_price(self, product_id: UUID, new_price: float, reason: Optional[str] = None, created_by: Optional[UUID] = None, approved_by: Optional[UUID] = None) -> Product:
         """Update product price with proper ledger tracking"""
         db_product = self.get(product_id)
         if not db_product:
@@ -321,7 +314,7 @@ class ProductRepository(IProductRepository):
             previous_price=current_price,
             new_price=new_price,
             product_id=product_id,
-            reason=reason,
+            reason=reason or "Price update",
             created_by=created_by,
             approved_by=approved_by
         )
@@ -366,26 +359,39 @@ class ProductRepository(IProductRepository):
             db_transaction = ProductAmountLedger(**transaction_data)
             self.db.add(db_transaction)
             
-            # if transaction_data.get('batch_id'):
-            #     batch = self.get_batch(transaction_data['batch_id'])
-            #     if batch:
-            #         batch.available_quantity = quantity_after
-            #         batch.quantity = batch.available_quantity + float(batch.reserved_quantity)
-            
             self.db.commit()
             self.db.refresh(db_transaction)
             return db_transaction
         except IntegrityError as e:
             self.db.rollback()
             raise ValueError(str(e))
-
         except Exception as e:
             self.db.rollback()
             raise e
 
-    def receive(self, product_id: UUID, amount: float, warehouse_id: UUID, batch_id: Optional[UUID] = None, 
-                created_by: UUID = None, transaction_reference: str = None, notes: str = None) -> Product:
+    def receive(self, product_id: UUID, amount: float, warehouse_id: UUID, batch_info: Optional[dict] = None, 
+                created_by: Optional[UUID] = None, transaction_reference: Optional[str] = None, notes: Optional[str] = None) -> Product:
         """Receive stock (increase inventory)"""
+        batch_id = None
+        
+        if batch_info:
+            if 'batch_id' in batch_info and batch_info['batch_id']:
+                batch_id = batch_info['batch_id']
+                batch = self.get_batch(batch_id)
+                if batch:
+                    batch.quantity = float(Decimal(str(batch.quantity)) + Decimal(str(amount)))
+                    self.db.commit()
+            else:
+                batch_data = {
+                    'product_id': product_id,
+                    'warehouse_id': warehouse_id,
+                    'quantity': amount,
+                    'created_by': created_by,
+                    **batch_info
+                }
+                batch = self.create_batch(batch_data)
+                batch_id = batch.id
+        
         transaction_data = {
             'transaction_type': TransactionType.PURCHASE,
             'quantity_change': amount,
@@ -401,11 +407,13 @@ class ProductRepository(IProductRepository):
         self.create_amount_transaction(transaction_data)
         return self.get(product_id)
 
-
-    def add_product_to_warehouse(self, product_id: UUID, warehouse_id: UUID, batch_id: UUID, 
+    def add_product_to_warehouse(self, product_id: UUID, warehouse_id: UUID, batch_id: Optional[UUID] = None, 
                                 minimum_stock: float = 0.0, maximum_stock: Optional[float] = None,
-                                location_code: Optional[str] = None) -> None:
+                                location_code: Optional[str] = None) -> Product:
         """Add a product batch to a warehouse"""
+        if not batch_id:
+            raise ValueError("batch_id is required")
+            
         existing = self.db.query(ProductWarehouse).filter_by(
             product_id=product_id, 
             warehouse_id=warehouse_id,
@@ -423,21 +431,30 @@ class ProductRepository(IProductRepository):
             )
             self.db.add(db_product_warehouse)
             self.db.commit()
+        
+        return self.get(product_id)
 
-    def remove_product_from_warehouse(self, product_id: UUID, warehouse_id: UUID, batch_id: UUID) -> None:
+    def remove_product_from_warehouse(self, product_id: UUID, warehouse_id: UUID, batch_id: Optional[UUID] = None) -> Product:
         """Remove a product batch from a warehouse"""
-        existing = self.db.query(ProductWarehouse).filter_by(
-            product_id=product_id, 
-            warehouse_id=warehouse_id,
-            batch_id=batch_id
-        ).first()
+        if batch_id:
+            existing = self.db.query(ProductWarehouse).filter_by(
+                product_id=product_id, 
+                warehouse_id=warehouse_id,
+                batch_id=batch_id
+            ).first()
+        else:
+            existing = self.db.query(ProductWarehouse).filter_by(
+                product_id=product_id, 
+                warehouse_id=warehouse_id
+            ).first()
         
         if existing:
-            
-            existing.is_deleted=True
+            existing.is_deleted = True
             self.db.commit()
         else:
-            raise ValueError("Product-Warehouse-Batch relationship not found")
+            raise ValueError("Product-Warehouse relationship not found")
+            
+        return self.get(product_id)
 
     def get_warehouse_stock(self, product_id: UUID, warehouse_id: UUID, batch_id: Optional[UUID] = None) -> List[ProductWarehouse]:
         """Get warehouse stock for a product"""
@@ -461,11 +478,18 @@ class ProductRepository(IProductRepository):
                 Product.description.ilike(f"%{query}%")
             )
         ).all()
-    
 
-    def add_product_crop(self, product_id: UUID, crop_id: UUID, quantity_ratio: float = 1.0) -> ProductCrop:
+    def add_product_crop(self, data: dict) -> ProductCrop:
         """Add a crop as raw material to a product"""
         try:
+            product_id = data.get('product_id')
+            crop_id = data.get('crop_id')
+            quantity_ratio = data.get('quantity_ratio', 1.0)
+            is_primary = data.get('is_primary', False)
+            
+            if not product_id or not crop_id:
+                raise ValueError("product_id and crop_id are required")
+            
             existing = self.db.query(ProductCrop).filter_by(
                 product_id=product_id,
                 crop_id=crop_id
@@ -488,15 +512,21 @@ class ProductRepository(IProductRepository):
             self.db.rollback()
             raise ValueError(str(e))
 
-    def remove_product_crop(self, product_id: UUID, crop_id: UUID) -> None:
+    def remove_product_crop(self, data: dict) -> None:
         """Remove a crop from a product's raw materials"""
+        product_id = data.get('product_id')
+        crop_id = data.get('crop_id')
+        
+        if not product_id or not crop_id:
+            raise ValueError("product_id and crop_id are required")
+            
         existing = self.db.query(ProductCrop).filter_by(
             product_id=product_id, 
             crop_id=crop_id
         ).first()
         
         if existing:
-            existing.is_deleted=True
+            existing.is_deleted = True
             self.db.commit()
         else:
             raise ValueError("Product-Crop relationship not found")
@@ -504,7 +534,8 @@ class ProductRepository(IProductRepository):
     def get_product_crops(self, product_id: UUID) -> List[ProductCrop]:
         """Get all crops used in a product"""
         return self.db.query(ProductCrop).filter(
-            ProductCrop.product_id == product_id
+            ProductCrop.product_id == product_id,
+            ProductCrop.is_deleted == False
         ).all()
 
     def update_product_crop_ratio(self, product_id: UUID, crop_id: UUID, new_ratio: float) -> ProductCrop:
@@ -521,3 +552,96 @@ class ProductRepository(IProductRepository):
         self.db.commit()
         self.db.refresh(existing)
         return existing
+
+    def add_tax_to_product(self, product_id: UUID, tax_id: UUID) -> ProductTax:
+        """Add a tax to a product"""
+        try:
+            existing = self.db.query(ProductTax).filter_by(
+                product_id=product_id,
+                tax_id=tax_id
+            ).first()
+            
+            if existing:
+                if existing.is_deleted:
+                    existing.is_deleted = False
+                    self.db.commit()
+                    self.db.refresh(existing)
+                    return existing
+                else:
+                    raise ValueError("Product-Tax relationship already exists")
+            
+            db_product_tax = ProductTax(
+                product_id=product_id,
+                tax_id=tax_id
+            )
+            self.db.add(db_product_tax)
+            self.db.commit()
+            self.db.refresh(db_product_tax)
+            return db_product_tax
+        except IntegrityError as e:
+            self.db.rollback()
+            raise ValueError(str(e))
+
+    def remove_tax_from_product(self, product_id: UUID, tax_id: UUID) -> None:
+        """Remove a tax from a product"""
+        existing = self.db.query(ProductTax).filter_by(
+            product_id=product_id,
+            tax_id=tax_id
+        ).first()
+        
+        if existing:
+            existing.is_deleted = True
+            self.db.commit()
+        else:
+            raise ValueError("Product-Tax relationship not found")
+
+    def get_product_taxes(self, product_id: UUID) -> List[ProductTax]:
+        """Get all taxes for a product"""
+        return self.db.query(ProductTax).filter(
+            ProductTax.product_id == product_id,
+            ProductTax.is_deleted == False
+        ).all()
+
+    def get_low_stock_products(self, warehouse_id: Optional[UUID] = None) -> List[Product]:
+        """Get products with stock below minimum levels"""
+        query = self.db.query(Product).join(ProductBatch).join(ProductWarehouse).filter(
+            Product.is_deleted == False,
+            ProductBatch.available_quantity < ProductWarehouse.minimum_stock
+        )
+        
+        if warehouse_id:
+            query = query.filter(ProductWarehouse.warehouse_id == warehouse_id)
+            
+        return query.all()
+
+    def get_expiring_batches(self, days_ahead: int = 30) -> List[ProductBatch]:
+        """Get batches expiring within specified days"""
+        from datetime import timedelta
+        future_date = datetime.now(timezone.utc) + timedelta(days=days_ahead)
+        
+        return self.db.query(ProductBatch).filter(
+            ProductBatch.is_deleted == False,
+            ProductBatch.expiry_date <= future_date,
+            ProductBatch.expiry_date >= datetime.now(timezone.utc)
+        ).all()
+
+    def get_stock_valuation(self, warehouse_id: Optional[UUID] = None) -> dict:
+        """Calculate total stock valuation"""
+        query = self.db.query(ProductBatch).filter(
+            ProductBatch.is_deleted == False
+        )
+        
+        if warehouse_id:
+            query = query.filter(ProductBatch.warehouse_id == warehouse_id)
+        
+        batches = query.all()
+        total_cost_value = sum(float(batch.quantity) * float(batch.cost_price) for batch in batches)
+        total_selling_value = sum(float(batch.quantity) * float(batch.selling_price) for batch in batches)
+        total_quantity = sum(float(batch.quantity) for batch in batches)
+        
+        return {
+            'total_cost_value': total_cost_value,
+            'total_selling_value': total_selling_value,
+            'total_quantity': total_quantity,
+            'potential_profit': total_selling_value - total_cost_value
+        }

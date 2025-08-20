@@ -82,6 +82,19 @@ def remove_product_from_category(
     """Remove a product from a category"""
     product_service.remove_product_from_category(product_id, category_id)
 
+@router.post("/{product_id}/tax/{tax_id}", status_code=status.HTTP_201_CREATED)
+def add_tax_to_product(product_id: UUID, tax_id: UUID, product_service: ProductServiceDep):
+    """Associate a tax with a product"""
+    product_service.add_tax_to_product(product_id, tax_id)
+    return {"message": "Tax added to product successfully"}
+
+@router.delete("/{product_id}/tax/{tax_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_tax_from_product(product_id: UUID, tax_id: UUID, product_service: ProductServiceDep):
+    """Remove a tax association from a product"""
+    product_service.remove_tax_from_product(product_id, tax_id)
+    return {"message": "Tax removed from product successfully"}
+    
+
 @router.delete("", status_code=status.HTTP_204_NO_CONTENT)
 def delete_product(id: UUID, product_service: ProductServiceDep):
     """Delete a product (soft delete)"""

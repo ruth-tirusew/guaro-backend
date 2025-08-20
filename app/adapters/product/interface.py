@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional, List
 from uuid import UUID
-from app.adapters.product.models import Product, Category, ProductBatch
+from app.adapters.product.models import Product, Category, ProductBatch, ProductTax
 
 class IProductRepository(ABC):
     @abstractmethod
@@ -78,4 +78,16 @@ class IProductRepository(ABC):
 
     @abstractmethod
     def add_product_crop(self, data: dict):
+        pass
+
+    @abstractmethod
+    def add_tax_to_product(self, product_id: UUID, tax_id: UUID) -> ProductTax:
+        pass
+
+    @abstractmethod
+    def remove_tax_from_product(self, product_id: UUID, tax_id: UUID) -> None:
+        pass
+
+    @abstractmethod
+    def get_product_taxes(self, product_id: UUID) -> List[ProductTax]:
         pass

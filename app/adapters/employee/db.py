@@ -39,17 +39,17 @@ class EmployeeRepository(IEmployeeRepository):
         try:
             self.db.commit()
             self.db.refresh(employee)
-        except IntegrityError:
+        except IntegrityError as err:
             self.db.rollback()
-            raise ValueError("Employee profile creation failed.")
+            raise ValueError("Employee profile creation failed.") from err
         return employee
 
     def get_employee_by_id(self, employee_id: str) -> Optional[EmployeeProfile]:
         try:
             uuid_obj = uuid.UUID(employee_id)
             return self.db.query(EmployeeProfile).filter(EmployeeProfile.id == uuid_obj).first()
-        except ValueError:
-            raise ValueError("Invalid employee ID format.")
+        except ValueError as err:
+            raise ValueError("Invalid employee ID format.") from err
 
     def get_employee_by_employee_id(self, employee_id: str) -> Optional[EmployeeProfile]:
         return self.db.query(EmployeeProfile).filter(EmployeeProfile.employee_id == employee_id).first()
@@ -74,9 +74,9 @@ class EmployeeRepository(IEmployeeRepository):
         try:
             self.db.commit()
             self.db.refresh(employee)
-        except IntegrityError:
+        except IntegrityError as err:
             self.db.rollback()
-            raise ValueError("Employee profile update failed due to integrity error.")
+            raise ValueError("Employee profile update failed due to integrity error.") from err
         return employee
 
     def delete_employee_profile(self, employee_id: str) -> bool:
@@ -115,24 +115,24 @@ class EmployeeRepository(IEmployeeRepository):
         try:
             self.db.commit()
             self.db.refresh(document)
-        except IntegrityError:
+        except IntegrityError as err:
             self.db.rollback()
-            raise ValueError("Employee document creation failed.")
+            raise ValueError("Employee document creation failed.") from err
         return document
 
     def get_employee_document_by_id(self, document_id: str) -> Optional[EmployeeDocument]:
         try:
             uuid_obj = uuid.UUID(document_id)
             return self.db.query(EmployeeDocument).filter(EmployeeDocument.id == uuid_obj).first()
-        except ValueError:
-            raise ValueError("Invalid document ID format.")
+        except ValueError as err:
+            raise ValueError("Invalid document ID format.") from err
 
     def get_employee_documents_by_employee(self, employee_id: str) -> List[EmployeeDocument]:
         try:
             uuid_obj = uuid.UUID(employee_id)
             return self.db.query(EmployeeDocument).filter(EmployeeDocument.employee_id == uuid_obj).all()
-        except ValueError:
-            raise ValueError("Invalid employee ID format.")
+        except ValueError as err:
+            raise ValueError("Invalid employee ID format.") from err
 
     def get_employee_documents_by_type(self, employee_id: str, document_type: str) -> List[EmployeeDocument]:
         try:
@@ -143,8 +143,8 @@ class EmployeeRepository(IEmployeeRepository):
                     EmployeeDocument.document_type == document_type
                 )
             ).all()
-        except ValueError:
-            raise ValueError("Invalid employee ID format.")
+        except ValueError as err:
+            raise ValueError("Invalid employee ID format.") from err
 
     def update_employee_document(self, document_id: str, update_data: EmployeeDocumentDBSchema) -> Optional[EmployeeDocument]:
         document = self.get_employee_document_by_id(document_id)
@@ -194,8 +194,8 @@ class EmployeeRepository(IEmployeeRepository):
         try:
             uuid_obj = uuid.UUID(employee_id)
             return self.db.query(EmployeePerformanceReview).filter(EmployeePerformanceReview.employee_id == uuid_obj).all()
-        except ValueError:
-            raise ValueError("Invalid employee ID format.")
+        except ValueError as err:
+            raise ValueError("Invalid employee ID format.") from err
 
     def update_performance_review(self, review_id: str, update_data: EmployeePerformanceReviewDBSchema) -> Optional[EmployeePerformanceReview]:
         review = self.get_performance_review_by_id(review_id)
@@ -208,9 +208,9 @@ class EmployeeRepository(IEmployeeRepository):
         try:
             self.db.commit()
             self.db.refresh(review)
-        except IntegrityError:
+        except IntegrityError as err:
             self.db.rollback()
-            raise ValueError("Performance review update failed due to integrity error.")
+            raise ValueError("Performance review update failed due to integrity error.") from err
         return review
 
     def delete_performance_review(self, review_id: str) -> bool:
@@ -229,9 +229,9 @@ class EmployeeRepository(IEmployeeRepository):
         try:
             self.db.commit()
             self.db.refresh(leave)
-        except IntegrityError:
+        except IntegrityError as err:
             self.db.rollback()
-            raise ValueError("Leave request creation failed.")
+            raise ValueError("Leave request creation failed.") from err
         return leave
 
     def get_leave_request_by_id(self, leave_id: str) -> Optional[EmployeeLeave]:
@@ -245,8 +245,8 @@ class EmployeeRepository(IEmployeeRepository):
         try:
             uuid_obj = uuid.UUID(employee_id)
             return self.db.query(EmployeeLeave).filter(EmployeeLeave.employee_id == uuid_obj).all()
-        except ValueError:
-            raise ValueError("Invalid employee ID format.")
+        except ValueError as err:
+            raise ValueError("Invalid employee ID format.") from err
 
     def get_leave_requests_by_status(self, employee_id: str, status: str) -> List[EmployeeLeave]:
         try:
@@ -257,8 +257,8 @@ class EmployeeRepository(IEmployeeRepository):
                     EmployeeLeave.status == status
                 )
             ).all()
-        except ValueError:
-            raise ValueError("Invalid employee ID format.")
+        except ValueError as err:
+            raise ValueError("Invalid employee ID format.") from err
 
     def update_leave_request(self, leave_id: str, update_data: EmployeeLeaveDBSchema) -> Optional[EmployeeLeave]:
         leave = self.get_leave_request_by_id(leave_id)
@@ -271,9 +271,9 @@ class EmployeeRepository(IEmployeeRepository):
         try:
             self.db.commit()
             self.db.refresh(leave)
-        except IntegrityError:
+        except IntegrityError as err:
             self.db.rollback()
-            raise ValueError("Leave request update failed due to integrity error.")
+            raise ValueError("Leave request update failed due to integrity error.") from err
         return leave
 
     def delete_leave_request(self, leave_id: str) -> bool:
@@ -292,24 +292,24 @@ class EmployeeRepository(IEmployeeRepository):
         try:
             self.db.commit()
             self.db.refresh(ledger_entry)
-        except IntegrityError:
+        except IntegrityError as err:
             self.db.rollback()
-            raise ValueError("Salary ledger entry creation failed.")
+            raise ValueError("Salary ledger entry creation failed.") from err
         return ledger_entry
 
     def get_salary_ledger_by_id(self, ledger_id: str) -> Optional[EmployeeSalaryLedger]:
         try:
             uuid_obj = uuid.UUID(ledger_id)
             return self.db.query(EmployeeSalaryLedger).filter(EmployeeSalaryLedger.id == uuid_obj).first()
-        except ValueError:
-            raise ValueError("Invalid ledger ID format.")
+        except ValueError as err:
+            raise ValueError("Invalid ledger ID format.") from err
 
     def get_salary_ledger_by_employee(self, employee_id: str) -> List[EmployeeSalaryLedger]:
         try:
             uuid_obj = uuid.UUID(employee_id)
             return self.db.query(EmployeeSalaryLedger).filter(EmployeeSalaryLedger.employee_id == uuid_obj).all()
-        except ValueError:
-            raise ValueError("Invalid employee ID format.")
+        except ValueError as err:
+            raise ValueError("Invalid employee ID format.") from err
 
     def update_salary_ledger_entry(self, ledger_id: str, update_data: EmployeeSalaryLedgerDBSchema) -> Optional[EmployeeSalaryLedger]:
         ledger_entry = self.get_salary_ledger_by_id(ledger_id)
@@ -322,9 +322,9 @@ class EmployeeRepository(IEmployeeRepository):
         try:
             self.db.commit()
             self.db.refresh(ledger_entry)
-        except IntegrityError:
+        except IntegrityError as err:
             self.db.rollback()
-            raise ValueError("Salary ledger entry update failed due to integrity error.")
+            raise ValueError("Salary ledger entry update failed due to integrity error.") from err
         return ledger_entry
 
     def delete_salary_ledger_entry(self, ledger_id: str) -> bool:
@@ -373,5 +373,5 @@ class EmployeeRepository(IEmployeeRepository):
         try:
             uuid_obj = uuid.UUID(employee_id)
             return self.db.query(EmployeeProfile).filter(EmployeeProfile.id == uuid_obj).first()
-        except ValueError:
-            raise ValueError("Invalid employee ID format.")
+        except ValueError as err:
+            raise ValueError("Invalid employee ID format.") from err
