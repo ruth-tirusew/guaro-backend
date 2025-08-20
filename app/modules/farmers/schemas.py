@@ -65,9 +65,11 @@ class FarmerContractRead(FarmerContractBase):
 class FarmerContractCreate(FarmerContractBase):
     pass
 
-class FarmerContractUpdate(FarmerContractBase):
+class FarmerContractUpdate(BaseModel):
     id: uuid.UUID
-
+    farmer_id: Optional[uuid.UUID] = None
+    document_url: Optional[HttpUrl] = None
+    name: Optional[str] = None
 # ====================== FARMER SCHEMAS ======================
 class FarmerBase(BaseModel):
     full_name: str

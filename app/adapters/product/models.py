@@ -75,7 +75,6 @@ class Product(BaseModel):
     def available_amount(self):
         total = 0
         for batch in self.batches:
-            print(batch.available_quantity, "From model")
             total += batch.available_quantity or 0
         return total
 
@@ -133,7 +132,7 @@ class ProductBatch(BaseModel):
         """
         Available quantity = total quantity - reserved quantity
         """
-        return (Decimal(self.quantity) or Decimal('0.0')) - (Decimal(self.reserved_quantity) or Decimal('0.0'))
+        return Decimal(self.quantity or 0) - Decimal(self.reserved_quantity or 0)
 
     @available_quantity.expression
     def available_quantity(cls):
@@ -184,9 +183,6 @@ class ProductWarehouse(BaseModel):
     available_quantity = Column(Numeric(12, 4), default=0.0)
     reserved_quantity = Column(Numeric(12, 4), default=0.0)
     minimum_stock = Column(Numeric(12, 4), default=0.0)
-    maximum_stock = Column(Numeric(12, 4), nullable=True)
-    location_code = Column(String(50), nullable=True)
-
 
     batch = relationship('ProductBatch', back_populates='warehouse_stocks')
 

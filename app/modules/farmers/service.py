@@ -51,7 +51,7 @@ class FarmerService:
             return self._convert_farmer_to_read(farmer, address, legal_documents)
 
         except ValueError as e:
-            logger.error(f"Error while creating farmer {str(e)}")
+            logger.error(f"Error while updating farmer {str(e)}")
             raise ErrorFactory.bad_request(
                 message=str(e),
                 context={
