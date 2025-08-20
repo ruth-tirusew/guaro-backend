@@ -12,28 +12,19 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 @handle_auth_exceptions
 @router.post("/login", response_model=TokenResponse)
 def login(credentials: UserCredentials, auth_service: AuthServiceDep):
-    try:
-        return auth_service.authenticate(credentials)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+    return auth_service.authenticate(credentials)
 
 
 @handle_auth_exceptions
 @router.get("/user/{user_id}", response_model=UserInfo)
-def get_user(user_id: str, auth_service: AuthServiceDep):
-    try:
-        return auth_service.get_user(user_id)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-
+def get_user(user_id: str, auth_service: AuthServiceDep): 
+    return auth_service.get_user(user_id)
+   
 
 @handle_auth_exceptions
 @router.post("/refresh", response_model=TokenResponse)
 def refresh_token(request: RefreshTokenRequest, auth_service: AuthServiceDep):
-    try:
-        return auth_service.refresh_token(request.refresh_token)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+    return auth_service.refresh_token(request.refresh_token)
 
 @handle_auth_exceptions
 @router.post("/logout")

@@ -49,21 +49,17 @@ class BiodataService:
 
     
     def deplete_crop(self,request: GRNRequest) -> CropRead:
-        # Validate
         self.get_crop_by_id(request.crop_id)
-        # self.warehouse_service.get_warehouse_by_id(request.warehouse_id)
         crop = self.repository.deplete(request.crop_id, request.amount, request.warehouse_id, request.notes)
         return CropRead.model_validate(crop)   
 
-    # InitialBiodata methods
     def create_initial_biodata(self, biodata_data: InitialBiodataCreate) -> InitialBiodataRead:
-        # Validate farmer existence
         farmer = self.farmer_service.get_farmer(biodata_data.farmer_id)
         if not farmer:
-            raise ErrorFactory.not_found(f"Farmer")
+            raise ErrorFactory.not_found("Farmer")
         existing_crop = self.get_crop_by_id(biodata_data.crop_id)
         if not existing_crop:
-            raise ErrorFactory.not_found(f"Crop")
+            raise ErrorFactory.not_found("Crop")
         biodata = self.repository.create_initial_biodata(biodata_data.model_dump())
         return InitialBiodataRead.model_validate(biodata)
 
@@ -71,7 +67,7 @@ class BiodataService:
         biodata = self.repository.get_initial_biodata_by_id(biodata_id)
         return InitialBiodataRead.model_validate(biodata) if biodata else None
 
-    def get_initial_biodata_by_farmer(self, farmer_id: uuid.UUID) -> List[InitialBiodataRead]:
+    def get_initial_biodata_by_farmer(self, farmer_id: uuid.UUID) -> InitialBiodataList:
         biodata_list = self.repository.get_initial_biodata_by_farmer(farmer_id)
         return InitialBiodataList(biodata=[InitialBiodataRead.model_validate(b) for b in biodata_list])
 

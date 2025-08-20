@@ -113,7 +113,7 @@ class OrderUpdate(BaseModel):
     discount: Optional[Decimal] = Field(None, ge=0)
     adjustment: Optional[Decimal] = None
     notes: Optional[str] = None
-    modified_by: UUID = Field(..., description="User making the modification")
+    modified_by: UUID  
 
 class OrderResponse(OrderBase):
     id: UUID = Field(..., description="Order ID")
@@ -180,11 +180,11 @@ class CustomerFilter(BaseModel):
 class BulkOrderStatusUpdate(BaseModel):
     order_ids: List[UUID] = Field(..., min_length=1, description="List of order IDs")
     status: OrderStatus = Field(..., description="New status")
-    modified_by: UUID = Field(..., description="User making the modification")
+    modified_by: UUID  
 
 class OrderStatusUpdate(BaseModel):
     status: OrderStatus = Field(..., description="New order status")
-    modified_by: UUID = Field(..., description="User making the modification")
+    modified_by: UUID  
     notes: Optional[str] = Field(None, description="Status change notes")
 
 class OrderFinancialSummary(BaseModel):

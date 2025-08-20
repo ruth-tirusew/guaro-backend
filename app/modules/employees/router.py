@@ -20,42 +20,27 @@ router = APIRouter(prefix="/employees", tags=["Employees"])
 @router.post("/", response_model=EmployeeRead, status_code=status.HTTP_201_CREATED)
 def create_employee(employee: EmployeeCreate, employee_service: EmployeeServiceDep):
     """Create a new employee profile"""
-    try:
-        return employee_service.create_employee(employee)
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    return employee_service.create_employee(employee)
 
 @router.get("/{employee_id}", response_model=EmployeeRead)
 def get_employee(employee_id: str, employee_service: EmployeeServiceDep):
-    """Get an employee by ID"""
-    employee = employee_service.get_employee(employee_id)
-    if not employee:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
-    return employee
+    """Get an employee by ID"""   
+    return employee_service.get_employee(employee_id)
 
 @router.get("/by-employee-id/{employee_id}", response_model=EmployeeRead)
 def get_employee_by_employee_id(employee_id: str, employee_service: EmployeeServiceDep):
     """Get an employee by employee ID"""
-    employee = employee_service.get_employee_by_employee_id(employee_id)
-    if not employee:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
-    return employee
+    return employee_service.get_employee_by_employee_id(employee_id)
 
 @router.get("/by-email/{email}", response_model=EmployeeRead)
 def get_employee_by_email(email: str, employee_service: EmployeeServiceDep):
     """Get an employee by email"""
-    employee = employee_service.get_employee_by_email(email)
-    if not employee:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
-    return employee
+    return employee_service.get_employee_by_email(email)
 
 @router.get("/by-phone/{phone_number}", response_model=EmployeeRead)
 def get_employee_by_phone(phone_number: str, employee_service: EmployeeServiceDep):
     """Get an employee by phone number"""
-    employee = employee_service.get_employee_by_phone(phone_number)
-    if not employee:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee not found")
-    return employee
+    return employee_service.get_employee_by_phone(phone_number)
 
 @router.get("/", response_model=EmployeeList)
 def list_employees(employee_service: EmployeeServiceDep):
@@ -198,10 +183,7 @@ def create_performance_review(review: EmployeePerformanceReviewCreate, employee_
 @router.get("/performance-reviews/{review_id}", response_model=EmployeePerformanceReviewRead)
 def get_performance_review(review_id: str, employee_service: EmployeeServiceDep):
     """Get a performance review by ID"""
-    review = employee_service.get_performance_review(review_id)
-    if not review:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Performance review not found")
-    return review
+    return employee_service.get_performance_review(review_id)
 
 @router.get("/{employee_id}/performance-reviews", response_model=EmployeePerformanceReviewList)
 def get_employee_performance_reviews(employee_id: str, employee_service: EmployeeServiceDep):
@@ -230,18 +212,13 @@ def delete_performance_review(review_id: str, employee_service: EmployeeServiceD
 @router.post("/leave-requests", response_model=EmployeeLeaveRead, status_code=status.HTTP_201_CREATED)
 def create_leave_request(leave: EmployeeLeaveCreate, employee_service: EmployeeServiceDep):
     """Create a new leave request"""
-    try:
-        return employee_service.create_leave_request(leave)
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    return employee_service.create_leave_request(leave)
+
 
 @router.get("/leave-requests/{leave_id}", response_model=EmployeeLeaveRead)
 def get_leave_request(leave_id: str, employee_service: EmployeeServiceDep):
     """Get a leave request by ID"""
-    leave = employee_service.get_leave_request(leave_id)
-    if not leave:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Leave request not found")
-    return leave
+    return employee_service.get_leave_request(leave_id)
 
 @router.get("/{employee_id}/leave-requests", response_model=EmployeeLeaveList)
 def get_employee_leave_requests(employee_id: str, employee_service: EmployeeServiceDep):
@@ -256,13 +233,8 @@ def get_employee_leave_requests_by_status(employee_id: str, status: str, employe
 @router.put("/leave-requests/{leave_id}", response_model=EmployeeLeaveRead)
 def update_leave_request(leave_id: str, leave_update: EmployeeLeaveUpdate, employee_service: EmployeeServiceDep):
     """Update a leave request"""
-    try:
-        leave = employee_service.update_leave_request(leave_id, leave_update)
-        if not leave:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Leave request not found")
-        return leave
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    return employee_service.update_leave_request(leave_id, leave_update)
+
 
 @router.delete("/leave-requests/{leave_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_leave_request(leave_id: str, employee_service: EmployeeServiceDep):
@@ -275,18 +247,11 @@ def delete_leave_request(leave_id: str, employee_service: EmployeeServiceDep):
 @router.post("/salary-ledger", response_model=EmployeeSalaryLedgerRead, status_code=status.HTTP_201_CREATED)
 def create_salary_ledger_entry(ledger_entry: EmployeeSalaryLedgerCreate, employee_service: EmployeeServiceDep):
     """Create a new salary ledger entry"""
-    try:
-        return employee_service.create_salary_ledger_entry(ledger_entry)
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
+    return employee_service.create_salary_ledger_entry(ledger_entry)
 @router.get("/salary-ledger/{ledger_id}", response_model=EmployeeSalaryLedgerRead)
 def get_salary_ledger_entry(ledger_id: str, employee_service: EmployeeServiceDep):
     """Get a salary ledger entry by ID"""
-    ledger_entry = employee_service.get_salary_ledger_entry(ledger_id)
-    if not ledger_entry:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Salary ledger entry not found")
-    return ledger_entry
+    return employee_service.get_salary_ledger_entry(ledger_id)
 
 @router.get("/{employee_id}/salary-ledger", response_model=EmployeeSalaryLedgerList)
 def get_employee_salary_ledger(employee_id: str, employee_service: EmployeeServiceDep):
@@ -296,13 +261,7 @@ def get_employee_salary_ledger(employee_id: str, employee_service: EmployeeServi
 @router.put("/salary-ledger/{ledger_id}", response_model=EmployeeSalaryLedgerRead)
 def update_salary_ledger_entry(ledger_id: str, ledger_update: EmployeeSalaryLedgerUpdate, employee_service: EmployeeServiceDep):
     """Update a salary ledger entry"""
-    try:
-        ledger_entry = employee_service.update_salary_ledger_entry(ledger_id, ledger_update)
-        if not ledger_entry:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Salary ledger entry not found")
-        return ledger_entry
-    except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    return employee_service.update_salary_ledger_entry(ledger_id, ledger_update)
 
 @router.delete("/salary-ledger/{ledger_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_salary_ledger_entry(ledger_id: str, employee_service: EmployeeServiceDep):

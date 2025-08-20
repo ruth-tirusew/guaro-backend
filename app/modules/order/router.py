@@ -46,11 +46,7 @@ def create_customer(
     customer_data: CustomerCreate,
     service: OrderServiceDep
 ):
-    try:
-        return service.create_customer(customer_data)
-    except Exception as e:
-        logger.error(f"Failed to create customer: {str(e)}")
-        raise HTTPException(status_code=400, detail=str(e))
+    return service.create_customer(customer_data)
 
 
 @router.get("/customers/{customer_id}", response_model=CustomerResponse)
@@ -58,13 +54,7 @@ def get_customer_by_id(
     customer_id: UUID,
     service: OrderServiceDep
 ):
-    try:
-        return service.get_customer_by_id(customer_id)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal server error")
-
+    return service.get_customer_by_id(customer_id)
 
 @router.put("/customers/{customer_id}", response_model=CustomerResponse)
 def update_customer(
@@ -72,13 +62,7 @@ def update_customer(
     customer_data: CustomerUpdate,
     service: OrderServiceDep
 ):
-    try:
-        return service.update_customer(customer_id, customer_data)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal server error")
-
+    return service.update_customer(customer_id, customer_data)
 
 @router.delete("/customers/{customer_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_customer(
@@ -231,12 +215,7 @@ def update_order_item(
     item_data: UpdateOrderItem,
     service: OrderServiceDep
 ):
-    try:
-        return service.update_order_item(item_id, item_data)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal server error")
+    return service.update_order_item(item_id, item_data)
 
 
 @router.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -244,26 +223,14 @@ def delete_order_item(
     item_id: UUID,
     service: OrderServiceDep
 ):
-    try:
-        service.delete_order_item(item_id)
-        return
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal server error")
-
+    service.delete_order_item(item_id)
 
 @router.get("/{order_id}/items", response_model=List[OrderItemResponse])
 def get_order_items(
     order_id: UUID,
     service: OrderServiceDep
 ):
-    try:
-        return service.get_order_items(order_id)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal server error")
+    return service.get_order_items(order_id)
 
 
 @router.post("/{order_id}/items/bulk", response_model=List[OrderItemResponse])
@@ -272,12 +239,7 @@ def bulk_add_items_to_order(
     items_data: List[AddItemToOrder],
     service: OrderServiceDep
 ):
-    try:
-        return service.bulk_add_items_to_order(order_id, items_data)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Internal server error")
+    return service.bulk_add_items_to_order(order_id, items_data)
 
 
 # ==============================================================================
@@ -303,4 +265,4 @@ def export_orders(
         )
     except Exception as e:
         logger.error(f"Export failed: {str(e)}")
-        raise HTTPException(status_code=500, detail="Export failed")
+        raise ErrorFactory.internal_server_error(user_message="Export failed")
