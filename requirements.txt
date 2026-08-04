@@ -3,7 +3,7 @@ alembic==1.16.4
 annotated-types==0.7.0
 anyio==4.9.0
 async-property==0.2.2
-black==25.1.0
+black==26.3.1
 cached-property==1.5.2
 certifi==2025.7.14
 cffi==1.17.1
