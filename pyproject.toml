@@ -15,7 +15,7 @@ authors = [{ name = "Ruth Tirusew" }]
 dependencies = [
   "aiofiles==24.1.0",
   "annotated-types==0.7.0",
-  "anyio==4.9.0",
+  "anyio==4.14.2",
   "async-property==0.2.2",
   "cached-property==1.5.2",
   "certifi==2025.7.14",
